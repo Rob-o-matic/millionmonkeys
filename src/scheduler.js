@@ -8,6 +8,12 @@ const GEM_TIERS = {
   5: { baseMin: Infinity, baseMax: Infinity, pity: Infinity, name: 'Shakespeare' },
 };
 
+/* Act 1 cadence ceiling: rarity comes from selectTier's weights, but the
+   GAP to the next gem never exceeds 45s (the documented tier-2 "every
+   20-40s" cadence). Without this, awarding a tier-3/4 gem silenced ALL
+   visible discoveries for that tier's own 60s-20min interval. */
+export const MAX_GEM_INTERVAL_MS = 45000;
+
 /* Scale interval based on monkey count (50% floor) */
 export function scaleByMonkeys(interval, monkeyCount) {
   const scaled = interval / monkeyCount;
@@ -78,6 +84,8 @@ export function scheduleNextGem(
           Math.random() * (tierConfig.baseMax - tierConfig.baseMin),
         monkeyCount
       );
+    // Cap the gap: rare tiers stay rare by weight, not by drought
+    interval = Math.min(interval, MAX_GEM_INTERVAL_MS);
   } else {
     interval = tierConfig.baseMin; // Use base for scripted
   }

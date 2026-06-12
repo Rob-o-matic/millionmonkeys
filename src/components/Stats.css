@@ -33,7 +33,7 @@
   font-family: "Courier Prime", monospace;
   font-size: 18px;
   font-weight: bold;
-  color: var(--brass);
+  color: var(--brass-ink); /* 18px bold = WCAG large text; brass was 2.77 < 3.0 */
   font-variant-numeric: tabular-nums;
 }
 
@@ -69,7 +69,10 @@
   font-size: 12px;
   font-weight: bold;
   color: var(--text);
-  text-shadow: 0 0 2px var(--bg);
+  /* Always ink-on-paper (14.8:1) — over the ribbon-red fill alone the
+     ink was 2.57:1, and a text-shadow is not a contrast mechanism */
+  background: var(--bg);
+  padding: 0 4px;
   pointer-events: none;
 }
 

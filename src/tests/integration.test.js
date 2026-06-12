@@ -1,11 +1,34 @@
 /* Integration test: simulate early play against the gem scheduler */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { gameReducer, INITIAL_STATE, ACTIONS } from '../gameState';
 import { createScheduler, scheduleNextGem, scaleByMonkeys } from '../scheduler';
 import { getTotalMonkeys, getCost, DOLLARS_PER_WORD } from '../economy';
 
+/* Deterministic PRNG (mulberry32): the 60s sim draws gem tiers/intervals
+   from Math.random, which made this test flaky when an early tier-3/4 draw
+   stalled the scheduler. Seeded so every run sees the same draw sequence. */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 describe('Economy Simulation', () => {
+  beforeEach(() => {
+    const rand = mulberry32(1337);
+    vi.spyOn(Math, 'random').mockImplementation(rand);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should harvest gems and afford upgrades over 60 simulated seconds', () => {
     let state = INITIAL_STATE;
     let scheduler = createScheduler();

@@ -85,26 +85,16 @@ export function App() {
     }]);
   };
 
-  /* Apply token drift on state change (tied to population milestones) */
+  /* Build Rule 2: drift advances only on NARRATIVE PURCHASES, never on a
+     timer or a population count — and narrative purchases don't exist in
+     Act 1, so Phase 1 drift is pinned at 0 (the study stays the study).
+     The old population-milestone drift (0.25/0.5/0.75/1.0 at 100/250/500/
+     1000 monkeys, bred monkeys included) violated that rule and made the
+     drift-0.75 gray-on-gray contrast collapse reachable in Phase 1.
+     SET_DRIFT / driftProgress plumbing stays intact for Phase 3. */
   useEffect(() => {
-    // Calculate drift based on monkey population
-    const totalMonkeys = gameState.upgrades.monkeys;
-
-    let drift = 0;
-    if (totalMonkeys >= 100) drift = 0.25; // Subtle shift at 100
-    if (totalMonkeys >= 250) drift = 0.5;  // Noticeable at 250
-    if (totalMonkeys >= 500) drift = 0.75; // Dramatic at 500
-    if (totalMonkeys >= 1000) drift = 1.0; // Full takeover at 1000
-
-    if (drift !== gameState.driftProgress) {
-      dispatch({
-        type: ACTIONS.SET_DRIFT,
-        payload: drift,
-      });
-    }
-
-    applyTokens(drift);
-  }, [gameState.upgrades.monkeys, gameState.driftProgress, dispatch]);
+    applyTokens(0);
+  }, []);
 
   /* Update elapsed time */
   useEffect(() => {

@@ -8,6 +8,7 @@ import {
   getGraceWindow,
   getBaseInterval,
   scaleByMonkeys,
+  MAX_GEM_INTERVAL_MS,
 } from '../scheduler';
 
 describe('Scheduler', () => {
@@ -70,6 +71,17 @@ describe('Scheduler', () => {
       chaoticTiers.reduce((a, b) => a + b) / chaoticTiers.length;
 
     expect(chaoticAvg).toBeGreaterThan(trainedAvg);
+  });
+
+  it('should never schedule a non-scripted gap above MAX_GEM_INTERVAL_MS', () => {
+    /* Tier-3/4 awards must not silence the feed for their own 60s-20min
+       base interval: rarity comes from selectTier weights, the GAP is
+       capped at the Act 1 cadence ceiling (45s) */
+    expect(MAX_GEM_INTERVAL_MS).toBe(45000);
+    for (let i = 0; i < 500; i++) {
+      const result = scheduleNextGem(scheduler, i * 1000, 1, 1, false); // chaos=1: mostly tier 3/4
+      expect(result.delay).toBeLessThanOrEqual(MAX_GEM_INTERVAL_MS);
+    }
   });
 
   it('should trigger pity after pity window elapses', () => {

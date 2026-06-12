@@ -62,8 +62,42 @@ Last updated: 2026-06-12 ~08:30 (local)
    "such sweet sorrow"); zero console errors. Full 10-min cadence run was
    sim+spot-check covered. The OWNER'S manual playtest (Phase 1 exit test:
    uncoached 10+ min, 8+ purchases) is still the gate for Phase 2.
-4. **TODO — Push branch + open PR** once GitHub auth works. PR per
-   create-pr instructions: title + body, wrap URL in <pr-created></pr-created> tag.
+4. **DONE 2026-06-12 — Round 3 (quality floor + scheduler cadence), 19/19
+   tests (new scheduler-clamp test added), build clean, NOT yet committed:**
+   - R3-1 scheduler.js: exported MAX_GEM_INTERVAL_MS=45000; non-scripted
+     gem gap clamped — rarity stays in selectTier's weights, a tier-3/4
+     award no longer silences discoveries for 60s-20min. App's 8s floor kept.
+   - R3-2 integration.test.js: 60s economy sim seeded (mulberry32(1337) via
+     vi.spyOn(Math,'random'), restored in afterEach) — was flaky.
+   - R3-3 App.jsx: population-based drift effect REMOVED (Build Rule 2:
+     drift only on narrative purchases, none exist in Act 1) — replaced by
+     mount-only applyTokens(0); drift-0.75 gray-on-gray collapse no longer
+     reachable in Phase 1. SET_DRIFT/driftProgress plumbing intact.
+   - R3-4 tokens: new Act 1 derived inks in tokens.css/.anthology/tokens.js
+     (--brass-ink #665020, --harvest-ink #1d5c38, --status-breeding #11505f,
+     --ribbon-ink #8E2E25, --harvest-green/--harvest-tint); --brass darkened
+     #B08D3E -> #A28439 (3.16 on paper for non-text borders AND 4.70 vs ink
+     for the warning-hover — the spec's #9A7B33 candidate failed the latter
+     at 4.19, so a lighter value satisfying BOTH constraints was derived).
+   - R3-5..R3-10 CSS: StatusBox (breeding #7dd3fc->token, purchase/discovery
+     to ink variants), Feed (harvest inks + tint tokens/color-mix), Stats
+     (stat-value brass-ink; progress-text paper chip instead of text-shadow),
+     UpgradeButton + App.css sell button (text to brass-ink, borders stay
+     brass; automated border -> --status-breeding), AlertModal (amber/red ->
+     brass/ribbon-red, warning hover text = ink, criticalPulse color-mix).
+   - R3-11: contrast_audit.mjs extended (new-token checks at drift 0, exits
+     1 on failure) and moved to sim/contrast_audit.mjs — ALL CHECKS PASS;
+     npm test 19/19; build clean; fresh-localStorage browser pass at 1280px
+     and 360px: ~10 min live run, 89 discoveries with max visible gap 26s,
+     two tier-3 RARE FINDs with no post-award drought, breeding alert at 8
+     monkeys with brass border + teal "monkeys born" lines readable, drift
+     pinned (paper unchanged at 15 monkeys incl. bred), no 360px overflow,
+     all tap targets >= 48px (alert button's 43px reading was the
+     modalSlideIn scale(0.9) mid-animation), zero console errors/warnings.
+5. **ON HOLD — DO NOT PUSH. Owner instruction 2026-06-12 20:14 UTC: "Don't
+   push until I say so."** No agent may run git push until the owner
+   explicitly lifts this. When lifted: push branch + open PR per create-pr
+   instructions (title + body, wrap URL in <pr-created></pr-created> tag).
 5. **DEFERRED — CLAUDE.md Phase 1 doc sync** (stale: lists Trained/Editor
    monkeys, $10 word value). Deliberately waits until the OWNER's manual
    playtest confirms the curve. Do not do this until owner confirms.

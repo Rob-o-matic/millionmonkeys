@@ -97,21 +97,23 @@
 
 .sell-button.active {
   border-color: var(--brass);
-  color: var(--brass);
+  color: var(--brass-ink); /* 11px bold text: brass was 2.77 < 4.5 */
   box-shadow: inset 0 0 0 1px var(--brass);
 }
 
 .sell-button.active:hover:not(:disabled) {
-  background: rgba(176, 141, 62, 0.1);
+  background: color-mix(in srgb, var(--brass) 10%, transparent);
 }
 
 .sell-button.automated {
-  border-color: #7dd3fc;
+  /* Border-only state color: dark teal passes non-text 3.0 on paper
+     (was #7dd3fc — off-palette and 1.4:1) */
+  border-color: var(--status-breeding);
   animation: autoPulse 2s ease-in-out infinite;
 }
 
 .sell-button.automated.active {
-  box-shadow: inset 0 0 0 1px #7dd3fc;
+  box-shadow: inset 0 0 0 1px var(--status-breeding);
 }
 
 @keyframes autoPulse {
@@ -159,7 +161,7 @@
 
 .sell-earnings {
   font-size: 9px;
-  color: var(--brass);
+  color: var(--brass-ink); /* 9px text: brass was 2.77 < 4.5 */
   font-weight: bold;
 }
 
