@@ -13,8 +13,8 @@ import {
   createScheduler,
   scheduleNextGem,
 } from './scheduler';
-import { getNextCost, canAfford as canAffordUpgrade, getAutoSaleRate, getBreedingBonuses, UPGRADE_CONFIGS } from './economy';
-import { playDing, playNearMissSound, resumeAudioContext, startTypingAmbience, stopTypingAmbience } from './audio';
+import { getNextCost, canAfford as canAffordUpgrade, getBreedingBonuses, UPGRADE_CONFIGS, DOLLARS_PER_WORD } from './economy';
+import { playDing, playNearMissSound, playSellSound, resumeAudioContext, startTypingAmbience, stopTypingAmbience } from './audio';
 import {
   isScriptedPhase,
   getNextScriptedGem,
@@ -32,12 +32,16 @@ export function App() {
   const [breedingUnlocked, setBreedingUnlocked] = useState(false);
   const [currentAlert, setCurrentAlert] = useState(null);
   const [lastMarketingMilestone, setLastMarketingMilestone] = useState(0);
+  const [injectedGem, setInjectedGem] = useState(null);
   const schedulerRef = useRef(createScheduler());
   const startTimeRef = useRef(Date.now());
+  const scriptStartRef = useRef(null);
   const lastHarvestTimeRef = useRef({});
   const lastAutoSaleRef = useRef(Date.now());
   const lastBreedingTimeRef = useRef(Date.now());
   const lastWordDetectionRef = useRef(0);
+  const bredSinceLastReportRef = useRef(0);
+  const lastBreedReportRef = useRef(Date.now());
 
   /* Load dictionary on mount */
   useEffect(() => {
@@ -186,19 +190,35 @@ export function App() {
       // Only run if we have monkeys
       if (totalMonkeys === 0) return;
 
-      /* Check if we're in scripted phase */
-      if (isScriptedPhase(currentTime)) {
-        const scriptedGem = getNextScriptedGem(currentTime);
+      /* Check if we're in scripted phase.
+         The scripted clock is anchored to the FIRST MONKEY PURCHASE, not
+         session start, so players who read the screen first don't skip
+         the 2s/4s/6s onboarding beats. */
+      const scriptTime = scriptStartRef.current
+        ? Date.now() - scriptStartRef.current
+        : 0;
+      if (scriptStartRef.current && isScriptedPhase(scriptTime)) {
+        const scriptedGem = getNextScriptedGem(scriptTime);
         if (
           scriptedGem &&
           !lastHarvestTimeRef.current[scriptedGem.time] &&
-          currentTime >= scriptedGem.time
+          scriptTime >= scriptedGem.time
         ) {
           lastHarvestTimeRef.current[scriptedGem.time] = true;
           playDing(scriptedGem.tier);
 
+          /* Show the gem in the feed (multi-word phrases never occur
+             naturally in the gibberish stream) */
+          setInjectedGem({
+            text: scriptedGem.text,
+            tier: scriptedGem.tier,
+            isNearMiss: scriptedGem.isNearMiss,
+            id: scriptedGem.time,
+          });
+
           if (scriptedGem.isNearMiss) {
             playNearMissSound();
+            addEvent('info', `SO CLOSE: "${scriptedGem.text}"`);
           } else {
             dispatch({
               type: ACTIONS.HARVEST_WORD,
@@ -227,15 +247,15 @@ export function App() {
       const timeSinceLastBreeding = Date.now() - lastBreedingTimeRef.current;
       const habitatCount = gameState.upgrades.habitat || 0;
 
-      // Base breeding interval: 7500ms (a pair produces baby every 5-10 seconds)
-      const baseBreedingInterval = 7500;
+      // Base breeding interval: 60s (background trickle, not an exponential engine)
+      const baseBreedingInterval = 60000;
       const numberOfPairs = Math.floor(totalMonkeys / 2);
 
       // Each pair doubles the reproduction rate (halves the interval)
       // Habitat upgrades add 10% rate boost per level
       const habitatRateBonus = 1 + (habitatCount * 0.1);
       const rateMultiplier = Math.max(1, numberOfPairs) * habitatRateBonus;
-      const breedingInterval = Math.max(baseBreedingInterval / rateMultiplier, 500); // Min 500ms
+      const breedingInterval = Math.max(baseBreedingInterval / rateMultiplier, 15000); // Min 15s (~4 births/min cap)
 
       if (breedingUnlocked && totalMonkeys >= 8 && timeSinceLastBreeding > breedingInterval) {
         // Habitat upgrades also increase offspring count by 10% per level
@@ -248,8 +268,20 @@ export function App() {
           payload: offspring,
         });
 
-        addEvent('breeding', `${offspring} monkey${offspring > 1 ? 's' : ''} born!`);
+        bredSinceLastReportRef.current += offspring;
         lastBreedingTimeRef.current = Date.now();
+      }
+
+      /* Batch breeding announcements: one StatusBox line per minute so
+         birth spam doesn't push discoveries out of the 3-line log */
+      if (
+        bredSinceLastReportRef.current > 0 &&
+        Date.now() - lastBreedReportRef.current > 60000
+      ) {
+        const born = bredSinceLastReportRef.current;
+        addEvent('breeding', `${born} monkey${born > 1 ? 's' : ''} born`);
+        bredSinceLastReportRef.current = 0;
+        lastBreedReportRef.current = Date.now();
       }
 
       /* Calculate text share in Phase 2 */
@@ -311,11 +343,11 @@ export function App() {
       if (wordIndex > 3000) tier = 3;
       else if (wordIndex > 1000) tier = 2;
 
-      // Check for combo (word detected within 2 seconds of last)
+      // Check for combo (word detected within 800ms of last - genuinely rare bursts)
       const timeSinceLastWord = Date.now() - lastWordDetectionRef.current;
       let newComboCount = 0;
 
-      if (timeSinceLastWord < 2000 && lastWordDetectionRef.current > 0) {
+      if (timeSinceLastWord < 800 && lastWordDetectionRef.current > 0) {
         // Continue combo
         newComboCount = comboCount + 1;
         setComboCount(newComboCount);
@@ -338,16 +370,9 @@ export function App() {
         },
       });
 
-      // Calculate combo bonus (awards bonus words)
+      // Combo is celebration only - no bonus-word income
       if (newComboCount >= 2) {
-        const bonusWords = newComboCount - 1; // 2x = +1 word, 3x = +2 words, etc.
-
-        dispatch({
-          type: ACTIONS.ADD_WORD,
-          payload: bonusWords,
-        });
-
-        addEvent('discovery', `"${word}" - ${newComboCount}x COMBO! +${bonusWords} bonus word${bonusWords > 1 ? 's' : ''}`);
+        addEvent('discovery', `"${word}" - ${newComboCount}x COMBO!`);
       } else {
         addEvent('discovery', `Discovered "${word}"`);
       }
@@ -357,7 +382,7 @@ export function App() {
   const handleSellWords = () => {
     if (gameState.resources.words > 0) {
       dispatch({ type: ACTIONS.SELL_WORDS });
-      playDing(1);
+      playSellSound();
     }
   };
 
@@ -366,10 +391,12 @@ export function App() {
     const cost = getNextCost(upgradeKey, currentCount);
 
     if (gameState.resources.money >= cost) {
-      /* Reset scheduler if buying first monkey (to restart scripted sequence) */
+      /* Reset scheduler if buying first monkey (to restart scripted sequence).
+         Anchor the scripted 0-35s clock to this moment. */
       if (upgradeKey === 'monkeys' && currentCount === 0) {
         schedulerRef.current.nextGemTime = 2000;
         lastHarvestTimeRef.current = {};
+        scriptStartRef.current = Date.now();
         addEvent('info', 'Research project initiated...');
       }
 
@@ -387,11 +414,15 @@ export function App() {
     if (key === 'habitat') {
       return breedingUnlocked;
     }
-    // Sales monkey is available after 3 minutes or if you have enough money
+    // Caffeine hidden until the first monkey: exactly one lit button at t=0
+    if (key === 'caffeine') {
+      return gameState.upgrades.monkeys >= 1;
+    }
+    // Sales monkey is available after 5 minutes or once it's a plausible save-up goal
     if (key === 'salesMonkey') {
       // Hide if already purchased
       if (gameState.upgrades.salesMonkey > 0) return false;
-      return gameState.resources.money >= 1000 || Date.now() - startTimeRef.current > 180000;
+      return gameState.resources.money >= 500 || Date.now() - startTimeRef.current > 300000;
     }
     return true;
   });
@@ -427,6 +458,8 @@ export function App() {
             startTime={startTimeRef.current}
             totalMonkeys={gameState.upgrades.monkeys}
             onWordGenerated={handleWordDetected}
+            caffeineCount={gameState.upgrades.caffeine}
+            injectedGem={injectedGem}
           />
         ) : (
           <SectorChart
@@ -445,13 +478,13 @@ export function App() {
         {/* Sell button + Economy buttons */}
         <div className="economy">
           <button
-            className={`sell-button ${gameState.resources.words > 0 ? 'active' : ''} ${gameState.upgrades.salesMonkey > 0 ? 'automated' : ''}`}
+            className={`sell-button ${gameState.resources.words > 0 ? 'active' : ''} ${gameState.upgrades.salesMonkey > 0 ? 'automated' : ''} ${gameState.resources.words >= 5 && gameState.upgrades.salesMonkey === 0 ? 'nudge' : ''}`}
             onClick={handleSellWords}
             disabled={gameState.resources.words === 0}
           >
             <span className="sell-label">{gameState.upgrades.salesMonkey > 0 ? 'AUTO-SELL' : 'SELL'}</span>
             <span className="sell-count">{gameState.resources.words} words</span>
-            <span className="sell-earnings">+${gameState.resources.words * 10}</span>
+            <span className="sell-earnings">+${gameState.resources.words * DOLLARS_PER_WORD}</span>
           </button>
 
           {upgradesToShow.map((upgradeKey) => {
@@ -465,6 +498,8 @@ export function App() {
                 upgradeName={UPGRADE_CONFIGS[upgradeKey].name}
                 cost={cost}
                 canAfford={gameState.resources.money >= cost}
+                money={gameState.resources.money}
+                pulse={upgradeKey === 'monkeys' && gameState.upgrades.monkeys === 0}
                 onClick={() => handleUpgradeBuy(upgradeKey)}
                 showCount={true}
                 upgradeCount={currentCount}

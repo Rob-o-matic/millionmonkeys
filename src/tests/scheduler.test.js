@@ -7,7 +7,8 @@ import {
   isPityActive,
   getGraceWindow,
   getBaseInterval,
-} from './scheduler';
+  scaleByMonkeys,
+} from '../scheduler';
 
 describe('Scheduler', () => {
   let scheduler;
@@ -32,13 +33,12 @@ describe('Scheduler', () => {
   });
 
   it('should scale intervals by monkey count', () => {
-    const baseInterval = getBaseInterval(1);
-    const result1 = scheduleNextGem(scheduler, 0, 1, 0, true);
-    const result2 = scheduleNextGem(scheduler, 0, 5, 0, true);
+    const baseInterval = getBaseInterval(2);
 
-    // With 5 monkeys, interval should be shorter but not less than 50%
-    expect(result2.delay).toBeLessThan(result1.delay);
-    expect(result2.delay).toBeGreaterThanOrEqual(baseInterval * 0.5);
+    // More monkeys = shorter interval, clamped at the 50% floor
+    expect(scaleByMonkeys(baseInterval, 1)).toBe(baseInterval);
+    expect(scaleByMonkeys(baseInterval, 2)).toBe(baseInterval / 2);
+    expect(scaleByMonkeys(baseInterval, 100)).toBe(baseInterval * 0.5);
   });
 
   it('should provide grace window per tier', () => {

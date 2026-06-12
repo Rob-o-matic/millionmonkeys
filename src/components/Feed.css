@@ -110,6 +110,26 @@
   }
 }
 
+/* Tier 2 gems: gold, larger - the big finds */
+.char.harvested.tier2 {
+  background: color-mix(in srgb, var(--brass) 25%, transparent);
+  color: var(--brass);
+  font-size: 1.15em;
+  font-weight: 700;
+}
+
+/* Near-miss: amber background, final wrong character in red */
+.char.near-miss {
+  background: color-mix(in srgb, var(--brass) 30%, transparent);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.char.near-miss .near-miss-final {
+  color: var(--ribbon-red);
+  font-weight: 700;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .char {
     animation: none;

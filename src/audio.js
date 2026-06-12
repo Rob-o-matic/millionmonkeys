@@ -82,6 +82,13 @@ export function playPurchaseSound() {
   playTone(440, 400, 'sine', 0.3);
 }
 
+export function playSellSound() {
+  if (!audioEnabled) return;
+  // Distinct two-note "cha-ching" (rising): A4 then D5
+  playTone(440, 120, 'sine', 0.25);
+  setTimeout(() => playTone(587.33, 200, 'sine', 0.25), 110);
+}
+
 export function setAudioEnabled(enabled) {
   audioEnabled = enabled;
 }

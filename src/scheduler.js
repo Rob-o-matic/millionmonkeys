@@ -9,7 +9,7 @@ const GEM_TIERS = {
 };
 
 /* Scale interval based on monkey count (50% floor) */
-function scaleByMonkeys(interval, monkeyCount) {
+export function scaleByMonkeys(interval, monkeyCount) {
   const scaled = interval / monkeyCount;
   const floor = interval * 0.5;
   return Math.max(scaled, floor);

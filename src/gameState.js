@@ -1,5 +1,7 @@
 /* Game state machine with Acts 2–3 dormant behind triggers */
 
+import { DOLLARS_PER_WORD } from './economy';
+
 export const INITIAL_STATE = {
   act: 1,
   phase: 1, // NEW: 1 = breeding phase, 2 = information empire
@@ -108,7 +110,7 @@ export function gameReducer(state = INITIAL_STATE, action) {
     case ACTIONS.SELL_WORDS:
       // Convert all words to money at fixed rate
       const wordsSold = state.resources.words;
-      const moneyEarned = wordsSold * 10; // $10 per word
+      const moneyEarned = wordsSold * DOLLARS_PER_WORD;
       return {
         ...state,
         resources: {

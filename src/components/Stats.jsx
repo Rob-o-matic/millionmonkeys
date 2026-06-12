@@ -22,9 +22,9 @@ export function Stats({ gameState }) {
 
   const totalMonkeys = gameState.upgrades.monkeys || 0;
   const shakespearePercent = Math.min(
-    (gameState.anthology.totalWordsEver / 1600) * 100,
+    (gameState.anthology.totalWordsEver / 100000) * 100,
     100
-  ).toFixed(1);
+  ).toFixed(2);
 
   return (
     <div className="stats-panel">

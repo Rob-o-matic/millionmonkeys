@@ -1,21 +1,20 @@
 /* Money economy: upgrades cost money (from selling words) */
 
 const UPGRADE_CONFIGS = {
-  monkeys: { baseCost: 30, name: 'Monkey' },
-  habitat: { baseCost: 500, name: 'Upgrade Habitat' },
-  caffeine: { baseCost: 60, name: 'Caffeine' },
-  salesMonkey: { baseCost: 2000, name: 'Sales Monkey' },
+  monkeys: { baseCost: 30, costMult: 1.30, name: 'Monkey' },
+  habitat: { baseCost: 500, costMult: 1.15, name: 'Upgrade Habitat' },
+  caffeine: { baseCost: 60, costMult: 2.0, name: 'Caffeine' },
+  salesMonkey: { baseCost: 2000, costMult: 1.15, name: 'Sales Monkey' },
 };
 
-const COST_MULTIPLIER = 1.15;
-const WORDS_PER_DOLLAR = 10; // $10 per word when sold
+const DOLLARS_PER_WORD = 2; // $2 per word when sold
 
 /* Calculate cost for the Nth purchase in a track (0-indexed) */
 export function getCost(upgradeKey, purchaseCount) {
   const config = UPGRADE_CONFIGS[upgradeKey];
   if (!config) return Infinity;
 
-  return Math.round(config.baseCost * Math.pow(COST_MULTIPLIER, purchaseCount));
+  return Math.round(config.baseCost * Math.pow(config.costMult, purchaseCount));
 }
 
 /* Get next cost (for current count) */
@@ -53,10 +52,4 @@ export function getProductionMultiplier(upgrades) {
   return mult;
 }
 
-/* Calculate auto-sale rate (words/second converted to money by sales monkeys) */
-export function getAutoSaleRate(upgrades) {
-  // Each sales monkey auto-sells 0.1 words per second
-  return upgrades.salesMonkey * 0.1;
-}
-
-export { UPGRADE_CONFIGS, WORDS_PER_DOLLAR };
+export { UPGRADE_CONFIGS, DOLLARS_PER_WORD };
