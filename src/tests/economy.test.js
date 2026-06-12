@@ -15,11 +15,11 @@ describe('Economy', () => {
     expect(DOLLARS_PER_WORD).toBe(2);
   });
 
-  it('should calculate monkey cost with 1.30x per-track multiplier', () => {
+  it('should calculate monkey cost with 1.25x per-track multiplier', () => {
     expect(getCost('monkeys', 0)).toBe(30);
-    expect(getCost('monkeys', 1)).toBe(39);
-    expect(getCost('monkeys', 2)).toBe(51);
-    expect(getCost('monkeys', 9)).toBe(318);
+    expect(getCost('monkeys', 1)).toBe(38);
+    expect(getCost('monkeys', 2)).toBe(47);
+    expect(getCost('monkeys', 9)).toBe(224);
   });
 
   it('should calculate caffeine cost with 2.0x per-track multiplier', () => {
@@ -43,8 +43,8 @@ describe('Economy', () => {
   it('should check affordability with money', () => {
     expect(canAfford(30, 'monkeys', 0)).toBe(true);
     expect(canAfford(29, 'monkeys', 0)).toBe(false);
-    expect(canAfford(39, 'monkeys', 1)).toBe(true);
-    expect(canAfford(38, 'monkeys', 1)).toBe(false);
+    expect(canAfford(38, 'monkeys', 1)).toBe(true);
+    expect(canAfford(37, 'monkeys', 1)).toBe(false);
   });
 
   it('should calculate total monkeys from upgrades', () => {

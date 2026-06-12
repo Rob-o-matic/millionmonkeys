@@ -33,8 +33,6 @@ export function Feed({
   gameState,
   startTime,
   totalMonkeys,
-  onWordGenerated,
-  caffeineCount = 0,
   injectedGem = null,
 }) {
   const feedRef = useRef(null);
@@ -114,8 +112,8 @@ export function Feed({
     intervalRef.current = setInterval(() => {
       if (pausedRef.current) return; // Paused while an injected gem lands
 
-      // Generate (and detect) OUTSIDE the state updater: updaters run during
-      // render, and dispatching to App from inside one is a React error
+      // Generate OUTSIDE the state updater: updaters run during render,
+      // and side effects from inside one are a React error
       const rand = Math.random();
       let text;
 
@@ -126,20 +124,11 @@ export function Feed({
         // 15% space
         text = ' ';
       } else if (rand > 0.72) {
-        // 10% real word from pool
+        // 10% real word from pool. PURE COSMETICS: detection income comes
+        // from the fixed-timestep accumulator in App.jsx (getDetectionsPerSecond),
+        // never from this render-coupled tick.
         const word = wordPool[Math.floor(Math.random() * wordPool.length)];
         text = word + ' ';
-
-        // 10% chance to detect/harvest the word, normalized by tick rate so
-        // income scales linearly with monkeys (the 2x/5x/10x blur tiers stay
-        // visual-only). Caffeine boosts detection by 1.1x per purchase.
-        const detectChance =
-          0.10 *
-          ((scaledInterval * totalMonkeys) / 40) *
-          Math.pow(1.1, caffeineCount);
-        if (onWordGenerated && Math.random() < detectChance) {
-          onWordGenerated(word);
-        }
       } else {
         // 72% random letters (gibberish)
         const letters = 'abcdefghijklmnopqrstuvwxyz';
@@ -152,7 +141,7 @@ export function Feed({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [startTime, totalMonkeys, wordPool, onWordGenerated, caffeineCount]);
+  }, [startTime, totalMonkeys, wordPool]);
 
   /* Auto-scroll to bottom */
   useEffect(() => {

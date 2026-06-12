@@ -42,19 +42,26 @@ Last updated: 2026-06-12 ~08:30 (local)
    nothing chaos-related moves to Act 2 (word-market stepper is Act 2's only
    new control). Documented in CLAUDE.md Phase 2 items 3-4 + Phase 3 item 6,
    and design doc Findings 2.2/2.4. Committed.
-2. **TODO — Round 2 of the design-team loop** (the original workflow's rounds
-   2-3 died on session limits). Re-run review panel (game designer, economy
-   analyst w/ sim at sim/balance_sim.js, UX tester) against CURRENT code;
-   manager synthesizes; developer implements; QA verifies. Known round-2
-   candidates from the verification playtest: the 5:41-8:21 purchase wall
-   (consider costMult 1.25x OR a $45-75 mid-tier purchase), rAF-frozen stat
-   counters (tickAnimation.js) when tab occluded, decouple word-detection
-   income from render throughput (fixed-timestep accumulator), post-35s
-   scheduler gems never inject visibly into the feed (injectedGem only set
-   from scripted path).
-3. **TODO — Re-run verification playtest** after round 2 lands (browser
-   playtest vs targets: scarcity 0-3min, purchase cadence 30-90s, 8+ buys
-   by min 10, scripted beats, no console errors).
+2. **DONE 2026-06-12 ~17:00 UTC — Round 2 of the design-team loop.** All four
+   issues fixed, QA-passed, committed:
+   A (purchase wall): monkey costMult 1.30->1.25 (sim: worst wait 57s, 18+
+   purchases by min 10; the $45-75 mid-tier item candidate was tested and
+   REJECTED — worst wait unchanged, adds a third button to the opening).
+   B (frozen counters): tickAnimation hidden-tab instant snap + duration+150ms
+   watchdog + cancel fns wired in Stats.jsx.
+   C (income decoupling): detection income moved to a 250ms wall-clock
+   fixed-timestep accumulator in App.jsx via getDetectionsPerSecond in
+   economy.js; Feed's generator tick is pure cosmetics now.
+   D (visible scheduler gems): src/phrases.js (12 tier-3 + 6 tier-4 phrases,
+   pickGemText); post-scripted scheduler branch injects gems into the feed
+   (8s min gap), RARE FIND StatusBox lines.
+3. **DONE 2026-06-12 (QA portion) — verification playtest.** QA browser
+   session (~7 min): scripted beats + near-miss render; ladder $30/38/47
+   correct; counters track with rAF dead AND document.hidden; foreground/
+   background income parity; scheduler gems visibly inject (incl. tier-3
+   "such sweet sorrow"); zero console errors. Full 10-min cadence run was
+   sim+spot-check covered. The OWNER'S manual playtest (Phase 1 exit test:
+   uncoached 10+ min, 8+ purchases) is still the gate for Phase 2.
 4. **TODO — Push branch + open PR** once GitHub auth works. PR per
    create-pr instructions: title + body, wrap URL in <pr-created></pr-created> tag.
 5. **DEFERRED — CLAUDE.md Phase 1 doc sync** (stale: lists Trained/Editor

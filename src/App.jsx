@@ -13,7 +13,8 @@ import {
   createScheduler,
   scheduleNextGem,
 } from './scheduler';
-import { getNextCost, canAfford as canAffordUpgrade, getBreedingBonuses, UPGRADE_CONFIGS, DOLLARS_PER_WORD } from './economy';
+import { getNextCost, canAfford as canAffordUpgrade, getBreedingBonuses, getDetectionsPerSecond, UPGRADE_CONFIGS, DOLLARS_PER_WORD } from './economy';
+import { pickGemText } from './phrases';
 import { playDing, playNearMissSound, playSellSound, resumeAudioContext, startTypingAmbience, stopTypingAmbience } from './audio';
 import {
   isScriptedPhase,
@@ -44,6 +45,17 @@ export function App() {
   const comboCountRef = useRef(0);
   const recentHarvestsRef = useRef(new Map());
   const dictionaryRef = useRef([]);
+  /* Fixed-timestep detection accumulator (issue C): income is computed here
+     on wall-clock time, never inside Feed's render-coupled generator tick */
+  const detectionAccRef = useRef(0);
+  const lastDetectionTickRef = useRef(null);
+  /* Assigned every render so the detection interval reads fresh values
+     without effect churn */
+  const liveStateRef = useRef({ monkeys: 0, caffeine: 0 });
+  liveStateRef.current = {
+    monkeys: gameState.upgrades.monkeys,
+    caffeine: gameState.upgrades.caffeine,
+  };
 
   /* Load dictionary on mount */
   useEffect(() => {
@@ -235,8 +247,47 @@ export function App() {
             addEvent('discovery', `Discovered "${scriptedGem.text}"`);
           }
         }
+      } else if (scriptStartRef.current) {
+        /* Post-scripted phase (issue D): the gem scheduler drives visible
+           discoveries. Previously scheduleNextGem was never called, so
+           nextGemTime sat at its stale 2000ms seed and no scheduler gem ever
+           fired or injected into the feed. */
+        if (!scheduler.postScriptInit) {
+          // One-time seed: schedule the first post-script gem instead of
+          // firing one the instant the scripted window ends
+          scheduler.postScriptInit = true;
+          scheduleNextGem(scheduler, scriptTime, totalMonkeys, 0, false);
+        } else if (scriptTime >= scheduler.nextGemTime) {
+          const { tier } = scheduleNextGem(scheduler, scriptTime, totalMonkeys, 0, false);
+          /* MIN_GEM_GAP_MS = 8000: scaleByMonkeys floors tier-1 intervals at
+             ~0.5-1.5s at scale, which would pause the feed ~40% of the time
+             (each injection pauses the stream 400ms) and add uncontrolled
+             income. The 8s floor caps scheduler income at <= 7.5 words/min
+             = <= $15/min — negligible vs the sim's $116+/min detection
+             income from min 3, so it does not move the issue-A verdict. */
+          scheduler.nextGemTime = Math.max(scheduler.nextGemTime, scriptTime + 8000);
+
+          // Chaos stays 0 (trained) — the caffeination dial is Phase 2
+          const text = pickGemText(tier, dictionaryRef.current);
+          if (text) {
+            playDing(Math.min(tier, 4));
+            setInjectedGem({
+              text,
+              tier,
+              isNearMiss: false,
+              id: `sched-${Math.round(scriptTime)}`,
+            });
+            dispatch({
+              type: ACTIONS.HARVEST_WORD,
+              payload: { text, tier, count: 1 },
+            });
+            addEvent(
+              'discovery',
+              tier >= 3 ? `RARE FIND: "${text}"` : `Discovered "${text}"`
+            );
+          }
+        }
       }
-      // After scripting, real-time word detection takes over (handled by Feed component)
 
       /* Sales Monkey auto-clicks SELL button every 5 seconds */
       if (gameState.upgrades.salesMonkey > 0 && gameState.resources.words > 0) {
@@ -332,6 +383,66 @@ export function App() {
 
     return () => clearInterval(gameLoop);
   }, [gameState, dispatch]);
+
+  /* Fixed-timestep word-detection income (issue C): a wall-clock accumulator
+     independent of Feed's render-coupled generator tick. Elapsed time is
+     UNCAPPED, so background timer clamping (250ms ticks stretching to 1s+)
+     credits identical income to foreground — income never depends on render
+     throughput. Rate comes from getDetectionsPerSecond (single source of
+     truth, mirrored by sim/balance_sim.js). */
+  useEffect(() => {
+    if (!gameStarted) return;
+
+    const detectionLoop = setInterval(() => {
+      const now = Date.now();
+      const { monkeys, caffeine } = liveStateRef.current;
+
+      if (monkeys === 0) {
+        lastDetectionTickRef.current = now;
+        detectionAccRef.current = 0;
+        return;
+      }
+
+      if (lastDetectionTickRef.current == null) {
+        lastDetectionTickRef.current = now;
+      }
+      const elapsedSec = (now - lastDetectionTickRef.current) / 1000;
+      lastDetectionTickRef.current = now;
+
+      detectionAccRef.current +=
+        getDetectionsPerSecond(monkeys, caffeine) * elapsedSec;
+
+      let whole = Math.floor(detectionAccRef.current);
+      detectionAccRef.current -= whole;
+
+      if (whole === 0 || dictionaryRef.current.length === 0) return;
+
+      /* Up to 3 detections go through the full path (5s dedup, tier from
+         dictionary index, ding, StatusBox event, HARVEST_WORD dispatch) */
+      const dict = dictionaryRef.current;
+      const fullPath = Math.min(whole, 3);
+      for (let i = 0; i < fullPath; i++) {
+        handleWordDetected(dict[Math.floor(Math.random() * dict.length)]);
+      }
+
+      /* Catch-up bursts / high monkey counts: credit the remainder in one
+         batched dispatch — zero income loss, no audio/log spam */
+      if (whole > 3) {
+        const remainder = whole - 3;
+        dispatch({
+          type: ACTIONS.HARVEST_WORD,
+          payload: {
+            text: dict[Math.floor(Math.random() * dict.length)],
+            tier: 1,
+            count: remainder,
+          },
+        });
+        addEvent('discovery', `Detected ${remainder} more words`);
+      }
+    }, 250);
+
+    return () => clearInterval(detectionLoop);
+  }, [gameStarted]);
 
   /* Stable callback (refs only, no state reads): Feed's generator interval
      lists this in its effect deps, so a new identity every render tears the
@@ -459,8 +570,6 @@ export function App() {
             gameState={gameState}
             startTime={startTimeRef.current}
             totalMonkeys={gameState.upgrades.monkeys}
-            onWordGenerated={handleWordDetected}
-            caffeineCount={gameState.upgrades.caffeine}
             injectedGem={injectedGem}
           />
         ) : (

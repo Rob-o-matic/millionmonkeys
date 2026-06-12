@@ -80,16 +80,16 @@ describe('Economy Simulation', () => {
     expect(scaleByMonkeys(interval, 5)).toBeGreaterThanOrEqual(interval * 0.5);
   });
 
-  it('should apply the 1.30x monkey cost multiplier chain', () => {
+  it('should apply the 1.25x monkey cost multiplier chain', () => {
     const cost0 = getCost('monkeys', 0);
     const cost1 = getCost('monkeys', 1);
     const cost2 = getCost('monkeys', 2);
 
     expect(cost0).toBe(30);
-    expect(cost1).toBe(39);
-    expect(cost2).toBe(51);
+    expect(cost1).toBe(38);
+    expect(cost2).toBe(47);
 
-    /* Verify multiplier chain */
-    expect(cost1 / cost0).toBeCloseTo(1.3, 2);
+    /* Verify multiplier chain (38/30 = 1.2667 due to per-step rounding) */
+    expect(cost1 / cost0).toBeCloseTo(1.25, 1);
   });
 });

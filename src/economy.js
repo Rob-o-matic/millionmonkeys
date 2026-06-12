@@ -1,7 +1,7 @@
 /* Money economy: upgrades cost money (from selling words) */
 
 const UPGRADE_CONFIGS = {
-  monkeys: { baseCost: 30, costMult: 1.30, name: 'Monkey' },
+  monkeys: { baseCost: 30, costMult: 1.25, name: 'Monkey' },
   habitat: { baseCost: 500, costMult: 1.15, name: 'Upgrade Habitat' },
   caffeine: { baseCost: 60, costMult: 2.0, name: 'Caffeine' },
   salesMonkey: { baseCost: 2000, costMult: 1.15, name: 'Sales Monkey' },
@@ -37,6 +37,38 @@ export function getBreedingBonuses(habitatCount) {
   const offspringMultiplier = 1 + (habitatCount * 0.1);
 
   return { intervalReduction, offspringMultiplier };
+}
+
+/* Nominal word-detection rate (detections per second).
+   Single source of truth for income rate — mirrors Feed.jsx's visual tick
+   model exactly, but income is computed here (fixed-timestep accumulator in
+   App.jsx) so it never depends on render throughput or timer throttling.
+   For M < 10 this reduces to 0.25 * M * 1.1^caffeine detections/sec
+   (= $0.50 * M * 1.1^c per sec at $2/word). */
+export function getDetectionsPerSecond(totalMonkeys, caffeineCount) {
+  if (totalMonkeys <= 0) return 0;
+
+  const baseInterval = 40;
+  let scaledInterval;
+  if (totalMonkeys < 10) {
+    scaledInterval = baseInterval / totalMonkeys;
+  } else if (totalMonkeys < 100) {
+    scaledInterval = baseInterval / (totalMonkeys * 2);
+  } else if (totalMonkeys < 1000) {
+    scaledInterval = baseInterval / (totalMonkeys * 5);
+  } else {
+    scaledInterval = baseInterval / (totalMonkeys * 10);
+  }
+  scaledInterval = Math.max(scaledInterval, 1);
+
+  const ticksPerSec = 1000 / scaledInterval;
+  const detectChance = Math.min(
+    1,
+    0.10 * ((scaledInterval * totalMonkeys) / 40) * Math.pow(1.1, caffeineCount)
+  );
+
+  // 10% of ticks emit a real word; each has detectChance to be harvested
+  return ticksPerSec * 0.10 * detectChance;
 }
 
 /* Calculate total monkeys (active producers) */
