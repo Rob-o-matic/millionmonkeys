@@ -5,11 +5,11 @@ export function StartScreen({ onStart }) {
   return (
     <div className="start-screen">
       <div className="start-content">
-        <h1>INFINITE MONKEYS RESEARCH INITIATIVE</h1>
+        <h1>MILLION MONKEYS RESEARCH INITIATIVE</h1>
 
         <div className="start-text">
           <p>
-            The oldest hypothesis in computational philosophy: given infinite time,
+            The oldest hypothesis in computational philosophy: given a million monkeys,
             a monkey striking keys at random will eventually produce the complete works
             of Shakespeare.
           </p>

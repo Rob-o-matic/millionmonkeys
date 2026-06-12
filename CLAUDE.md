@@ -1,4 +1,4 @@
-# Infinite Monkeys — Build Guide
+# Million Monkeys — Build Guide
 
 ## Tech Stack
 - **Frontend:** Vite + React (single-page app, no backend)
@@ -48,7 +48,7 @@ Acts 2 and 3 are dormant behind triggers — Phase 1 builds the door, not the ro
 ### Scripted Sequence (0-35s)
 - 0:02 — "the" (first discovery)
 - 0:04 — "monkey" (pattern emerges)
-- 0:06 — "infinite monkeys" (bigger discovery, Tier 2)
+- 0:06 — "million monkeys" (bigger discovery, Tier 2)
 - 0:10 — "shakespeare"
 - 0:15 — "complete"
 - 0:20 — "complete works" (Tier 2)

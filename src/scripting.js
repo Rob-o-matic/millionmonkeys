@@ -18,7 +18,7 @@ export const FIRST_60_SECONDS = [
   {
     time: 6000,
     tier: 2,
-    text: 'infinite monkeys',
+    text: 'million monkeys',
     description: 'First phrase - bigger discovery',
     isNearMiss: false,
   },
