@@ -88,6 +88,11 @@ After 35s: probability-based gem scheduler takes over.
 3. Chaos slider with the two loot tables and 60s retrain timer
 4. Hot-streak tap events; idle accrual + Harvest Report
 5. Prestige ("Publish a Volume") with Tenure
+6. Banana economy (see "Banana Economy" section below) — gated at the
+   breeding alert, designed TOGETHER with idle accrual (#4), never bolted on
+7. Optional, only if the exit test needs fuel: Tier 3/4 finds can sell at
+   fixed premiums (e.g. $25/phrase) vs. anthologizing forever — cash-now vs.
+   collection decision, zero RNG
 
 **Exit test:** Do players form a strategy opinion (chaos vs trained)? Do they prestige voluntarily?
 
@@ -96,6 +101,9 @@ After 35s: probability-based gem scheduler takes over.
 2. "Share of all text on Earth" stat with silent reveal
 3. Era-appropriate flavor and slow UI re-skin (warmer farm palette → corporate slate)
 4. Act 2 → 3 trigger event (Shakespeare completion beat)
+5. Word market becomes Act 2's core verb (see "Word Market Arc" section
+   below): player-set price vs. demand curve, market saturation/glut meter,
+   marketing rungs on the drift ladder drive demand
 
 **Exit test:** Do playtesters report the "wait, what am I doing?" moment unprompted?
 
@@ -114,6 +122,117 @@ After 35s: probability-based gem scheduler takes over.
 4. Mobile layout verification
 
 **Exit test:** (Deployment-ready; verified on mobile)
+
+---
+
+## Word Market Arc (designed 2026-06-12, panel review)
+
+**The narrative spine: the novelty economy.** In Act 1, selling words is easy
+and prices are flat because **buyers think it's cute** — "a monkey typed this!"
+is a novelty product, and novelty buyers don't haggle. Every word fetches an
+honest $2, the market asks no questions, and the SELL button is a pure
+cash-register moment. In Act 2, **the cuteness wears off**. The market stops
+paying for the gimmick and starts paying for *volume* — and now the monkeys are
+competing with human writers for human markets, and winning. The mechanical
+introduction of pricing, demand, and marketing IS this narrative beat: the
+moment the player first has to *think* about selling is the moment the monkeys
+stop being adorable and start being an industry.
+
+### Act 1 (Phase 1, SHIPPED): flat pricing, by design
+- Words sell at flat $2 (`DOLLARS_PER_WORD`). No variance, ever, in Act 1.
+- Rationale (panel verdict): the SELL button's job is legibility and rhythm,
+  not optimization. Flat pricing keeps the `+$N` preview honest, keeps every
+  press a win, and keeps the Sales Monkey's automation never-worse-than-manual
+  (automation worse than the thing it automates is the genre's cardinal sin).
+- Rejected for Act 1: random price walks (rewards NOT pressing the core
+  button; noise for a first-3-minutes audience), demand saturation (throttles
+  a button that's already naturally paced), price slider (wrong complexity for
+  the cozy study; competes with Phase 2's chaos slider).
+- Flavor hook to seed now or in Phase 2 polish: occasional StatusBox lines
+  from charmed buyers ("a collector wants more of this!") to establish that
+  the market is buying the *novelty*. This is the setup Act 2 pays off.
+
+### Act 2 (Phase 3): the market grows up
+- **Opening beat:** demand for novelty words visibly sags (a one-time scripted
+  dip — the only unearned price movement in the game), and the first drift
+  rung ("Hire a Publicist") unlocks the price control. The lesson: the market
+  no longer wants cute; it wants *content*.
+- **Model (deterministic, player-driven — Paperclips' lesson is that the
+  player must be the source of variance):**
+  - `demand = baseDemand × audienceMult / price^elasticity`, elasticity 1.2–1.5
+  - Saturation layer: `marketGlut` meter (0–1) fills when selling above
+    demand, decays ~2%/s; effective price = listPrice × (1 − 0.6 × glut).
+    Restraint visibly recovers price. Thematically: you are flooding the
+    market with monkey-typed content and the price of *all text* is falling.
+  - `audienceMult` IS the 12-step drift ladder: each marketing/distribution
+    rung multiplies demand 2–4x, and is what moves "share of all text on
+    Earth" — the market engine and the horror stat are one system. Each rung
+    makes the market *want* more of the slop: that's the drift.
+- **Continuity:** price control unlocks at default $2 list price so the Act 1
+  anchor carries over.
+- **UI:** sell panel grows a price stepper (− $0.10 +), a one-line demand
+  readout ("the market wants N words/s at this price"), and a thin glut bar.
+  The `+$N` ground truth stays.
+- **Automation ladder (attention handoff into Act 3):** Sales Monkey (dumb
+  auto-sell, carries over) → "Sales Department" (sells only up to demand,
+  never floods) → "Algorithmic Desk" (auto-optimizes price; retires the
+  minigame right as Act 3 approaches).
+
+---
+
+## Banana Economy (designed 2026-06-12, panel review — Phase 2)
+
+**The job:** Act 1 post-Sales-Monkey has no reason to check back in. Bananas
+are this game's "wire" (Universal Paperclips): a consumable input with a live
+price, a forecastable deadline (stock ÷ burn = minutes until stall), a
+dip-sniping minigame, and an automation catharsis. Bonus: bananas are the
+missing counterweight to breeding — population stops being a free lunch and
+becomes something you manage.
+
+**The structural difference from wire (and the fix):** in Paperclips the
+player chooses their burn rate by buying clippers; here breeding grows the
+upkeep bill autonomously while gem income is population-independent, so
+linear cost + sublinear income = a death spiral the player didn't author.
+The fix is severity, not tuning: zero bananas is a SOFT stall.
+
+- **Zero bananas = doze, never starve.** Typing ramps down over ~20s to 25%
+  speed (never 0 — a dead feed reads as a bug), the feed fills with
+  "zzzzz mmmm zzz" (the gibberish gets more gibberish), ambience thins,
+  **breeding pauses** (sleeping monkeys don't breed — required, or offline
+  players return to a huge hungry troop). Nothing is lost; recovery is
+  instant on feeding. Starvation/death is rejected: the dark turn is Act 2's
+  job, and Act 1 never destroys purchased capital.
+- **Introduction:** gated at the 8-monkey BREEDING ALERT (~min 3–4). The
+  alert already says population growth is automatic; append "...and they're
+  hungry." Nothing banana-related on screen before that moment — the first
+  three minutes stay two-button simple.
+- **Price:** mean-reverting random walk. Base $0.10/banana, range
+  $0.05–$0.18, tick ~5s, ±8% steps drifting to mean. Rare event: "Banana
+  boat arrives!" — 50% off for 20s with a ding. That event is the
+  check-back-in hook and the skill layer.
+- **Consumption:** 1 banana / monkey / 30s. Display as time remaining, not
+  burn rate: "🍌 240 — feeds the troop for 6m" (amber under 60s). Target:
+  upkeep = 10–20% of gross income through mid-game. Tuning gate: scale troop
+  consumption sublinearly past ~50 monkeys (population^0.8) so the
+  cost/income curves can't cross.
+- **Buying:** one button, "Buy 100 🍌 — $9.40", live unit price inline; bulk
+  tiers (1k, 10k) unlock with population.
+- **Automation:** "Banana Contract" $3,500 (next rung after Sales Monkey's
+  $2,000) — auto-buys when stock < 90s of supply at WHATEVER the current
+  price is, deliberately dumb (WireBuyer's lesson: dumb automation relieves
+  the obligation without deleting the skill layer). Optional upgrade:
+  "Shrewd Procurement Monkey" $8,000 — buys only below mean unless critical.
+- **Idle coupling (design together, not after):** offline, stock depletes,
+  then monkeys doze — idle earnings are capped by banana stock until the
+  Contract is bought. This is the genre's "no idling until automation
+  permits it" pacing valve for free. The Harvest Report MUST say "monkeys
+  slept after bananas ran out at 2h 14m" or capped earnings read as a bug.
+- **Balance budget:** bananas are a second money sink against the freshly
+  tuned 1.30x monkey curve — expect a balance pass (word value $2 → $2.25–
+  2.50, or cheaper early bananas). Budgeted, not free.
+- **Sequencing rule:** never introduce two ongoing-management mechanics in
+  the same session-minute (bananas vs. chaos-slider retrain vs. hot-streak
+  taps — stagger the unlocks).
 
 ---
 
