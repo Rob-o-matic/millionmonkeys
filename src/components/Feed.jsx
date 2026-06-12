@@ -8,6 +8,27 @@ const GEM_START = String.fromCharCode(1);
 const GEM_END = String.fromCharCode(2);
 const GEM_REGEX = new RegExp(`${GEM_START}([12N])([^${GEM_END}]*)${GEM_END}`, 'g');
 
+/* Cap the stream length: it is re-tokenized and re-rendered every tick, so
+   an unbounded buffer silently throttles the whole app (and with it, word
+   detection income) as a session ages */
+const STREAM_MAX = 6000;
+const STREAM_KEEP = 5000;
+
+function trimStream(stream) {
+  if (stream.length <= STREAM_MAX) return stream;
+  let trimmed = stream.slice(-STREAM_KEEP);
+  // Don't strand a gem tail: if a GEM_END appears before any GEM_START,
+  // the cut landed inside a gem - drop through the orphaned end marker
+  const firstEnd = trimmed.indexOf(GEM_END);
+  if (firstEnd !== -1) {
+    const firstStart = trimmed.indexOf(GEM_START);
+    if (firstStart === -1 || firstEnd < firstStart) {
+      trimmed = trimmed.slice(firstEnd + 1);
+    }
+  }
+  return trimmed;
+}
+
 export function Feed({
   gameState,
   startTime,
@@ -29,7 +50,7 @@ export function Feed({
     fetch('/words.txt')
       .then(res => res.text())
       .then(text => {
-        const words = text.trim().split('\n').filter(w => w.length > 0);
+        const words = text.split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
         setWordPool(words);
       })
       .catch(err => console.error('Failed to load dictionary:', err));
@@ -125,7 +146,7 @@ export function Feed({
         text = letters[Math.floor(Math.random() * letters.length)];
       }
 
-      setTextStream((prev) => prev + text);
+      setTextStream((prev) => trimStream(prev + text));
     }, scaledInterval);
 
     return () => {

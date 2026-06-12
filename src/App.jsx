@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useRef, useState } from 'react';
+import React, { useReducer, useEffect, useRef, useState, useCallback } from 'react';
 import { gameReducer, INITIAL_STATE, ACTIONS } from './gameState';
 import { applyTokens } from './tokens';
 import { StartScreen } from './components/StartScreen';
@@ -17,7 +17,7 @@ import { getNextCost, canAfford as canAffordUpgrade, getBreedingBonuses, UPGRADE
 import { playDing, playNearMissSound, playSellSound, resumeAudioContext, startTypingAmbience, stopTypingAmbience } from './audio';
 import {
   isScriptedPhase,
-  getNextScriptedGem,
+  getCurrentScriptedGem,
 } from './scripting';
 import './App.css';
 
@@ -27,7 +27,6 @@ export function App() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [showIndicator, setShowIndicator] = useState(false);
   const [events, setEvents] = useState([]);
-  const [dictionary, setDictionary] = useState([]);
   const [comboCount, setComboCount] = useState(0);
   const [breedingUnlocked, setBreedingUnlocked] = useState(false);
   const [currentAlert, setCurrentAlert] = useState(null);
@@ -42,14 +41,17 @@ export function App() {
   const lastWordDetectionRef = useRef(0);
   const bredSinceLastReportRef = useRef(0);
   const lastBreedReportRef = useRef(Date.now());
+  const comboCountRef = useRef(0);
+  const recentHarvestsRef = useRef(new Map());
+  const dictionaryRef = useRef([]);
 
   /* Load dictionary on mount */
   useEffect(() => {
     fetch('/words.txt')
       .then(res => res.text())
       .then(text => {
-        const words = text.trim().split('\n').filter(w => w.length > 0);
-        setDictionary(words);
+        const words = text.split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
+        dictionaryRef.current = words;
       })
       .catch(err => console.error('Failed to load dictionary:', err));
   }, []);
@@ -198,11 +200,13 @@ export function App() {
         ? Date.now() - scriptStartRef.current
         : 0;
       if (scriptStartRef.current && isScriptedPhase(scriptTime)) {
-        const scriptedGem = getNextScriptedGem(scriptTime);
+        /* Latest gem whose time has PASSED (getNextScriptedGem returns the
+           next FUTURE gem, which can never satisfy scriptTime >= gem.time —
+           that comparator mismatch silently killed the whole sequence) */
+        const scriptedGem = getCurrentScriptedGem(scriptTime);
         if (
           scriptedGem &&
-          !lastHarvestTimeRef.current[scriptedGem.time] &&
-          scriptTime >= scriptedGem.time
+          !lastHarvestTimeRef.current[scriptedGem.time]
         ) {
           lastHarvestTimeRef.current[scriptedGem.time] = true;
           playDing(scriptedGem.tier);
@@ -329,55 +333,53 @@ export function App() {
     return () => clearInterval(gameLoop);
   }, [gameState, dispatch]);
 
-  const handleWordDetected = (word) => {
-    // Check if we've already harvested this word recently
-    const alreadyHarvested = gameState.anthology.words.some(
-      w => w.text.toLowerCase() === word.toLowerCase() &&
-      Date.now() - w.timestamp < 5000 // Within last 5 seconds
-    );
+  /* Stable callback (refs only, no state reads): Feed's generator interval
+     lists this in its effect deps, so a new identity every render tears the
+     interval down constantly and deflates income with render cost */
+  const handleWordDetected = useCallback((word) => {
+    const now = Date.now();
 
-    if (!alreadyHarvested) {
-      // Determine tier based on word commonness in dictionary
-      const wordIndex = dictionary.indexOf(word);
-      let tier = 1;
-      if (wordIndex > 3000) tier = 3;
-      else if (wordIndex > 1000) tier = 2;
+    // Skip words harvested within the last 5 seconds
+    const lastHarvest = recentHarvestsRef.current.get(word.toLowerCase());
+    if (lastHarvest && now - lastHarvest < 5000) return;
+    recentHarvestsRef.current.set(word.toLowerCase(), now);
 
-      // Check for combo (word detected within 800ms of last - genuinely rare bursts)
-      const timeSinceLastWord = Date.now() - lastWordDetectionRef.current;
-      let newComboCount = 0;
+    // Determine tier based on word commonness in dictionary
+    const wordIndex = dictionaryRef.current.indexOf(word);
+    let tier = 1;
+    if (wordIndex > 3000) tier = 3;
+    else if (wordIndex > 1000) tier = 2;
 
-      if (timeSinceLastWord < 800 && lastWordDetectionRef.current > 0) {
-        // Continue combo
-        newComboCount = comboCount + 1;
-        setComboCount(newComboCount);
-      } else {
-        // Reset combo
-        newComboCount = 1;
-        setComboCount(1);
-      }
+    // Check for combo (word detected within 800ms of last - genuinely rare bursts)
+    const timeSinceLastWord = now - lastWordDetectionRef.current;
+    let newComboCount = 1;
 
-      lastWordDetectionRef.current = Date.now();
-
-      playDing(tier);
-
-      dispatch({
-        type: ACTIONS.HARVEST_WORD,
-        payload: {
-          text: word,
-          tier: tier,
-          count: 1,
-        },
-      });
-
-      // Combo is celebration only - no bonus-word income
-      if (newComboCount >= 2) {
-        addEvent('discovery', `"${word}" - ${newComboCount}x COMBO!`);
-      } else {
-        addEvent('discovery', `Discovered "${word}"`);
-      }
+    if (timeSinceLastWord < 800 && lastWordDetectionRef.current > 0) {
+      newComboCount = comboCountRef.current + 1;
     }
-  };
+    comboCountRef.current = newComboCount;
+    setComboCount(newComboCount);
+
+    lastWordDetectionRef.current = now;
+
+    playDing(tier);
+
+    dispatch({
+      type: ACTIONS.HARVEST_WORD,
+      payload: {
+        text: word,
+        tier: tier,
+        count: 1,
+      },
+    });
+
+    // Combo is celebration only - no bonus-word income
+    if (newComboCount >= 2) {
+      addEvent('discovery', `"${word}" - ${newComboCount}x COMBO!`);
+    } else {
+      addEvent('discovery', `Discovered "${word}"`);
+    }
+  }, []);
 
   const handleSellWords = () => {
     if (gameState.resources.words > 0) {
