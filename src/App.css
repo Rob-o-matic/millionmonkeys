@@ -1,0 +1,162 @@
+/* App-specific layout and styling */
+
+.game-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* Header */
+.game-header {
+  flex-shrink: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--text);
+  text-align: center;
+}
+
+.game-header h1 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  color: var(--secondary-text);
+  border: none;
+  padding: 0;
+  font-family: "Courier Prime", monospace;
+}
+
+.game-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+}
+
+/* Feed: dominant, top */
+.feed {
+  flex: 1;
+  border: 1px solid var(--text);
+  padding: var(--space-md);
+  font-family: var(--feed-font);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg);
+}
+
+/* Economy + Sell button */
+.economy {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--tap-target), 1fr));
+  gap: var(--space-sm);
+  min-height: var(--tap-target);
+}
+
+.economy button {
+  min-height: var(--tap-target);
+  padding: var(--space-md);
+}
+
+.sell-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--tap-target);
+  min-width: var(--tap-target);
+  padding: var(--space-md);
+  border: 1px solid var(--text);
+  border-radius: var(--button-border-radius);
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Courier Prime", monospace;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+
+.sell-button:active:not(:disabled) {
+  transform: translateY(var(--button-active-offset));
+}
+
+.sell-button:focus {
+  outline: 2px solid var(--ribbon-red);
+  outline-offset: 2px;
+}
+
+.sell-button.active {
+  border-color: var(--brass);
+  color: var(--brass);
+  box-shadow: inset 0 0 0 1px var(--brass);
+}
+
+.sell-button.active:hover:not(:disabled) {
+  background: rgba(176, 141, 62, 0.1);
+}
+
+.sell-button.automated {
+  border-color: #7dd3fc;
+  animation: autoPulse 2s ease-in-out infinite;
+}
+
+.sell-button.automated.active {
+  box-shadow: inset 0 0 0 1px #7dd3fc;
+}
+
+@keyframes autoPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.sell-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: var(--secondary-text);
+  border-color: var(--platen);
+}
+
+.sell-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.sell-count {
+  font-size: 8px;
+  color: var(--secondary-text);
+  font-weight: normal;
+}
+
+.sell-earnings {
+  font-size: 9px;
+  color: var(--brass);
+  font-weight: bold;
+}
+
+/* Tabs: bottom, tabs-based UI */
+.tabs {
+  display: flex;
+  gap: var(--space-sm);
+  border-top: 1px solid var(--text);
+  padding-top: var(--space-md);
+  min-height: var(--tap-target);
+}
+
+.tabs button {
+  flex: 1;
+  min-height: var(--tap-target);
+}

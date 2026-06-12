@@ -1,0 +1,97 @@
+/* Upgrade button styling */
+
+.upgrade-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-md);
+  min-width: var(--tap-target);
+  min-height: var(--tap-target);
+  border: 1px solid var(--text);
+  border-radius: var(--button-border-radius);
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Courier Prime", monospace;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+
+.upgrade-button:active {
+  transform: translateY(var(--button-active-offset));
+}
+
+.upgrade-button:focus {
+  outline: 2px solid var(--ribbon-red);
+  outline-offset: 2px;
+}
+
+.upgrade-button.affordable {
+  border-color: var(--brass);
+  color: var(--brass);
+  box-shadow: inset 0 0 0 1px var(--brass);
+}
+
+.upgrade-button.affordable:hover {
+  background: rgba(176, 141, 62, 0.1);
+}
+
+.upgrade-button.unaffordable {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: var(--secondary-text);
+  border-color: var(--platen);
+}
+
+.upgrade-name {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  line-height: 1.1;
+}
+
+.upgrade-count {
+  font-size: 8px;
+  color: var(--secondary-text);
+}
+
+.upgrade-desc {
+  font-size: 8px;
+  color: var(--secondary-text);
+  font-weight: normal;
+}
+
+.upgrade-cost {
+  font-size: 10px;
+  color: var(--brass);
+  font-weight: bold;
+}
+
+@media (max-width: 600px) {
+  .upgrade-button {
+    font-size: 9px;
+    padding: var(--space-sm);
+    gap: 1px;
+  }
+
+  .upgrade-name {
+    font-size: 8px;
+  }
+
+  .upgrade-count {
+    font-size: 7px;
+  }
+
+  .upgrade-desc {
+    font-size: 7px;
+  }
+
+  .upgrade-cost {
+    font-size: 9px;
+  }
+}
+

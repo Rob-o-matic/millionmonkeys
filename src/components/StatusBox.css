@@ -1,0 +1,64 @@
+.status-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--platen);
+  border-radius: 2px;
+  font-family: "Courier Prime", monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--secondary-text);
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar styling */
+.status-box::-webkit-scrollbar {
+  width: 8px;
+}
+
+.status-box::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.status-box::-webkit-scrollbar-thumb {
+  background: var(--platen);
+  border-radius: 2px;
+  border: 1px solid var(--bg);
+}
+
+.status-box::-webkit-scrollbar-thumb:hover {
+  background: var(--brass);
+}
+
+/* Firefox scrollbar */
+.status-box {
+  scrollbar-width: thin;
+  scrollbar-color: var(--platen) rgba(0, 0, 0, 0.2);
+}
+
+.status-line {
+  color: var(--secondary-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 1.4em;
+}
+
+.status-purchase {
+  color: var(--brass);
+}
+
+.status-discovery {
+  color: var(--ribbon-red);
+}
+
+.status-breeding {
+  color: #7dd3fc;
+}
+
+.status-info {
+  color: var(--secondary-text);
+}

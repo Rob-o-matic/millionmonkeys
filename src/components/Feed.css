@@ -1,0 +1,132 @@
+/* Feed renderer styling */
+
+.feed {
+  flex: 1;
+  border: 1px solid var(--text);
+  padding: var(--space-md);
+  font-family: var(--feed-font);
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg);
+  word-break: break-word;
+  white-space: pre-wrap;
+  transition: filter 0.3s ease;
+}
+
+/* Speed blur effects */
+.feed.blur-fast {
+  filter: blur(0.5px);
+  opacity: 0.9;
+}
+
+.feed.blur-extreme {
+  filter: blur(1.5px);
+  opacity: 0.7;
+  animation: textVibrate 0.1s infinite;
+}
+
+@keyframes textVibrate {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
+}
+
+/* Custom scrollbar styling */
+.feed::-webkit-scrollbar {
+  width: 8px;
+}
+
+.feed::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.feed::-webkit-scrollbar-thumb {
+  background: var(--platen);
+  border-radius: 2px;
+  border: 1px solid var(--bg);
+}
+
+.feed::-webkit-scrollbar-thumb:hover {
+  background: var(--brass);
+}
+
+/* Firefox scrollbar */
+.feed {
+  scrollbar-width: thin;
+  scrollbar-color: var(--platen) rgba(0, 0, 0, 0.2);
+}
+
+.feed-text {
+  font-kerning: none;
+  letter-spacing: 0;
+}
+
+.placeholder {
+  color: var(--secondary-text);
+  font-style: italic;
+}
+
+.char {
+  position: relative;
+  transition: all var(--duration-fast) ease;
+  display: inline;
+  animation: charStamp 60ms ease-out;
+}
+
+@keyframes charStamp {
+  0% {
+    opacity: 0;
+    transform: translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Harvested words: green highlight */
+.char.harvested {
+  background: rgba(62, 155, 95, 0.25);
+  color: #2d8659;
+  font-weight: 600;
+  animation: harvestGlow 400ms ease-out;
+}
+
+@keyframes harvestGlow {
+  0% {
+    background: rgba(62, 155, 95, 0.1);
+    text-shadow: 0 0 3px #3e9b5f;
+  }
+  50% {
+    background: rgba(62, 155, 95, 0.3);
+    text-shadow: 0 0 6px #3e9b5f;
+  }
+  100% {
+    background: rgba(62, 155, 95, 0.25);
+    text-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .char {
+    animation: none;
+  }
+
+  .char.harvested {
+    animation: none;
+    background: rgba(62, 155, 95, 0.2);
+  }
+}
+
+@media (max-width: 600px) {
+  .feed {
+    font-size: 12px;
+    padding: var(--space-sm);
+  }
+}
+
+
+

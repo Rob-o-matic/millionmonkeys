@@ -1,0 +1,199 @@
+/* ===== TOKEN SYSTEM ===== */
+/* All colors, radii, shadows, and fonts derive from CSS custom properties. */
+/* The applyTokens(driftProgress: 0..1) function interpolates between act keyframes. */
+
+:root {
+  /* ACT 1: "The Study" - Typewriter on wooden desk */
+  --paper: #F6F1E5;
+  --ink: #211D1A;
+  --ribbon-red: #A8362B;
+  --brass: #B08D3E;
+  --platen: #4A4440;
+
+  /* Derived tokens */
+  --bg: var(--paper);
+  --text: var(--ink);
+  --accent: var(--ribbon-red);
+  --secondary-text: var(--platen);
+  --button-border-radius: 0px;
+  --button-shadow: none;
+  --button-active-offset: 1px;
+  --header-font: monospace;
+  --feed-font: "Special Elite", "Courier Prime", monospace;
+
+  /* Spacing and layout */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+
+  /* Tap target minimum */
+  --tap-target: 48px;
+
+  /* Motion */
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 500ms;
+}
+
+/* Anthology always uses Act 1 tokens (frozen forever) */
+.anthology {
+  --bg: #F6F1E5;
+  --text: #211D1A;
+  --ribbon-red: #A8362B;
+  --brass: #B08D3E;
+  --platen: #4A4440;
+  --button-border-radius: 0px;
+  --button-shadow: none;
+  --header-font: monospace;
+  --feed-font: "Special Elite", "Courier Prime", monospace;
+}
+
+/* ===== BASE STYLES ===== */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Courier Prime", monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  /* Subtle paper grain */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.03) 0px,
+      rgba(0, 0, 0, 0.03) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+  transition: background-color var(--duration-slow) ease,
+              color var(--duration-slow) ease;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== TYPOGRAPHY ===== */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--header-font);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--text);
+}
+
+h1 {
+  font-size: 20px;
+}
+
+h2 {
+  font-size: 16px;
+}
+
+/* ===== BUTTONS ===== */
+
+button {
+  min-height: var(--tap-target);
+  min-width: var(--tap-target);
+  padding: var(--space-md);
+  border: 1px solid var(--text);
+  border-radius: var(--button-border-radius);
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Courier Prime", monospace;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color var(--duration-fast),
+              transform var(--duration-fast);
+  box-shadow: var(--button-shadow);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+button:active {
+  transform: translateY(var(--button-active-offset));
+}
+
+button:focus {
+  outline: 2px solid var(--ribbon-red);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== LAYOUT ===== */
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile-first: responsive to 360px */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 16px;
+  }
+
+  h2 {
+    font-size: 14px;
+  }
+
+  button {
+    min-height: var(--tap-target);
+    min-width: var(--tap-target);
+  }
+}
+
+/* ===== REDUCED MOTION ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+/* WCAG AA contrast: verify at every drift keyframe */
+body {
+  color: var(--text);
+  background: var(--bg);
+}
+
+button {
+  color: var(--text);
+  border-color: var(--text);
+}

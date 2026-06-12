@@ -1,0 +1,182 @@
+.alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: overlayFadeIn 0.3s ease;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.alert-modal {
+  background: var(--bg);
+  border: 3px solid var(--text);
+  padding: var(--space-2xl);
+  max-width: 500px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.alert-modal.warning {
+  border-color: #f59e0b;
+}
+
+.alert-modal.critical {
+  border-color: #ef4444;
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+             criticalPulse 2s ease-in-out infinite;
+}
+
+@keyframes criticalPulse {
+  0%, 100% {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 10px rgba(239, 68, 68, 0);
+  }
+}
+
+.alert-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.alert-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-align: center;
+  color: var(--text);
+  font-family: "Courier Prime", monospace;
+  text-transform: uppercase;
+}
+
+.alert-message {
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--text);
+  font-family: "Courier Prime", monospace;
+  max-width: 400px;
+}
+
+.alert-details {
+  font-size: 12px;
+  color: var(--secondary-text);
+  text-align: center;
+  font-family: "Courier Prime", monospace;
+  font-style: italic;
+  padding: var(--space-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  border: 1px solid var(--platen);
+}
+
+.alert-button {
+  margin-top: var(--space-md);
+  padding: var(--space-md) var(--space-2xl);
+  min-width: 200px;
+  border: 2px solid var(--text);
+  border-radius: var(--button-border-radius);
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Courier Prime", monospace;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--duration-normal) ease;
+}
+
+.alert-button:hover {
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: 0 0 12px var(--ribbon-red);
+  transform: translateY(-2px);
+}
+
+.alert-button:active {
+  transform: translateY(0);
+}
+
+.alert-button:focus {
+  outline: 2px solid var(--ribbon-red);
+  outline-offset: 2px;
+}
+
+.alert-modal.warning .alert-button {
+  border-color: #f59e0b;
+}
+
+.alert-modal.warning .alert-button:hover {
+  background: #f59e0b;
+  color: var(--bg);
+  box-shadow: 0 0 12px #f59e0b;
+}
+
+.alert-modal.critical .alert-button {
+  border-color: #ef4444;
+}
+
+.alert-modal.critical .alert-button:hover {
+  background: #ef4444;
+  color: var(--bg);
+  box-shadow: 0 0 12px #ef4444;
+}
+
+@media (max-width: 600px) {
+  .alert-modal {
+    max-width: 90%;
+    padding: var(--space-lg);
+  }
+
+  .alert-icon {
+    font-size: 36px;
+  }
+
+  .alert-title {
+    font-size: 16px;
+  }
+
+  .alert-message {
+    font-size: 12px;
+  }
+
+  .alert-button {
+    min-width: 150px;
+    padding: var(--space-sm) var(--space-lg);
+  }
+}
