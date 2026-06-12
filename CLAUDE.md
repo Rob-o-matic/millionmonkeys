@@ -85,8 +85,20 @@ After 35s: probability-based gem scheduler takes over.
 ### Phase 2 — Collection & Depth (NEXT)
 1. Anthology with pages, page-completion bonuses, verbatim saved finds
 2. Tier 3 phrases and Tier 4 anomalies with auto-titles
-3. Chaos slider with the two loot tables and 60s retrain timer
-4. Hot-streak tap events; idle accrual + Harvest Report
+3. Caffeination dial — the chaos slider, skinned as coffee: 5 stops from
+   Decaf (full Trained) to The Jitters (full Chaotic), each stop a different
+   loot-table blend; changing stops takes 60s to "metabolize" (the retrain
+   timer). Unlocks on first purchase of **Better Beans** (the existing $60
+   Caffeine rung, renamed; economics unchanged — $60 base, 2.0x cost mult,
+   +10% detection per tier). The dial is a free strategic posture, never a
+   consumable; banana doze overrides the dial (sleeping monkeys are decaf
+   no matter the setting).
+4. Hot-streak tap events, skinned as the **Espresso Shot**: a monkey glows
+   ("needs a pick-me-up") → press to serve espresso → 10–12s 3x output
+   burst, rapid taps extend to a ~20s cap. This is Act 1's temporary
+   press-boost (owner request, 2026-06); it is the hot-streak event, not a
+   second system, and lives inside the active ≤3x idle budget. A dozing
+   monkey cannot be espresso'd. Idle accrual + Harvest Report as before.
 5. Prestige ("Publish a Volume") with Tenure
 6. Banana economy (see "Banana Economy" section below) — gated at the
    breeding alert, designed TOGETHER with idle accrual (#4), never bolted on
@@ -104,6 +116,9 @@ After 35s: probability-based gem scheduler takes over.
 5. Word market becomes Act 2's core verb (see "Word Market Arc" section
    below): player-set price vs. demand curve, market saturation/glut meter,
    marketing rungs on the drift ladder drive demand
+6. Caffeination dial carries into Act 2 unchanged — no new chaos mechanics
+   in Act 2. The word-market price stepper is Act 2's only new control
+   surface (one new slider per act, ever).
 
 **Exit test:** Do playtesters report the "wait, what am I doing?" moment unprompted?
 
