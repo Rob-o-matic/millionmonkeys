@@ -234,7 +234,11 @@ export function App() {
                 count: 1,
               },
             });
-            addEvent('discovery', `Discovered "${scriptedGem.text}"`);
+            const phraseWordCount = scriptedGem.text.trim().split(/\s+/).length;
+            if (phraseWordCount > 1) setComboCount(phraseWordCount);
+            addEvent('discovery', phraseWordCount > 1
+              ? `Discovered "${scriptedGem.text}" — ${phraseWordCount}x COMBO!`
+              : `Discovered "${scriptedGem.text}"`);
           }
         }
       } else if (scriptStartRef.current) {
@@ -271,9 +275,13 @@ export function App() {
               type: ACTIONS.HARVEST_WORD,
               payload: { text, tier, count: 1 },
             });
+            const phraseWordCount = text.trim().split(/\s+/).length;
+            if (phraseWordCount > 1) setComboCount(phraseWordCount);
             addEvent(
               'discovery',
-              tier >= 3 ? `RARE FIND: "${text}"` : `Discovered "${text}"`
+              tier >= 3
+                ? `RARE FIND: "${text}"${phraseWordCount > 1 ? ` — ${phraseWordCount}x COMBO!` : ''}`
+                : `Discovered "${text}"`
             );
           }
         }
@@ -300,12 +308,11 @@ export function App() {
       // Habitat upgrades add 10% rate boost per level
       const habitatRateBonus = 1 + (habitatCount * 0.1);
       const rateMultiplier = Math.max(1, numberOfPairs) * habitatRateBonus;
-      const breedingInterval = Math.max(baseBreedingInterval / rateMultiplier, 15000); // Min 15s (~4 births/min cap)
+      const breedingInterval = Math.max(baseBreedingInterval / rateMultiplier, 8000); // Min 8s
 
       if (breedingUnlocked && totalMonkeys >= 8 && timeSinceLastBreeding > breedingInterval) {
-        // Habitat upgrades also increase offspring count by 10% per level
-        const habitatOffspringBonus = 1 + (habitatCount * 0.1);
-        const offspring = Math.max(1, Math.floor(1 * habitatOffspringBonus));
+        // Each habitat level adds 1 offspring per birth (level 0=1, level 1=2, etc.)
+        const offspring = 1 + habitatCount;
 
         // Add bred offspring (doesn't affect purchase cost)
         dispatch({
@@ -451,35 +458,14 @@ export function App() {
     if (wordIndex > 3000) tier = 3;
     else if (wordIndex > 1000) tier = 2;
 
-    // Check for combo (word detected within 800ms of last - genuinely rare bursts)
-    const timeSinceLastWord = now - lastWordDetectionRef.current;
-    let newComboCount = 1;
-
-    if (timeSinceLastWord < 800 && lastWordDetectionRef.current > 0) {
-      newComboCount = comboCountRef.current + 1;
-    }
-    comboCountRef.current = newComboCount;
-    setComboCount(newComboCount);
-
-    lastWordDetectionRef.current = now;
-
     playDing(tier);
 
     dispatch({
       type: ACTIONS.HARVEST_WORD,
-      payload: {
-        text: word,
-        tier: tier,
-        count: 1,
-      },
+      payload: { text: word, tier: tier, count: 1 },
     });
 
-    // Combo is celebration only - no bonus-word income
-    if (newComboCount >= 2) {
-      addEvent('discovery', `"${word}" - ${newComboCount}x COMBO!`);
-    } else {
-      addEvent('discovery', `Discovered "${word}"`);
-    }
+    addEvent('discovery', `Discovered "${word}"`);
   }, []);
 
   const handleSellWords = () => {
