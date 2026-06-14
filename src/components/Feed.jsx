@@ -34,6 +34,7 @@ export function Feed({
   startTime,
   totalMonkeys,
   injectedGem = null,
+  dozing = false,
 }) {
   const feedRef = useRef(null);
   const [textStream, setTextStream] = useState('');
@@ -89,48 +90,45 @@ export function Feed({
   useEffect(() => {
     if (!startTime || !totalMonkeys || wordPool.length === 0) return;
 
-    // Base interval: 40ms per character
-    // Scales dramatically with monkey count - becomes blur at high numbers
     const baseInterval = 40;
     let scaledInterval;
 
     if (totalMonkeys < 10) {
-      scaledInterval = baseInterval / totalMonkeys; // Normal scaling
+      scaledInterval = baseInterval / totalMonkeys;
     } else if (totalMonkeys < 100) {
-      scaledInterval = baseInterval / (totalMonkeys * 2); // 2x faster
+      scaledInterval = baseInterval / (totalMonkeys * 2);
     } else if (totalMonkeys < 1000) {
-      scaledInterval = baseInterval / (totalMonkeys * 5); // 5x faster
+      scaledInterval = baseInterval / (totalMonkeys * 5);
     } else {
-      scaledInterval = baseInterval / (totalMonkeys * 10); // 10x faster - total blur
+      scaledInterval = baseInterval / (totalMonkeys * 10);
     }
 
-    scaledInterval = Math.max(scaledInterval, 1); // Min 1ms (maximum chaos)
+    scaledInterval = Math.max(scaledInterval, 1);
 
-    // Clear old interval
+    // Dozing monkeys type at 25% speed
+    if (dozing) scaledInterval = scaledInterval * 4;
+
     if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = setInterval(() => {
-      if (pausedRef.current) return; // Paused while an injected gem lands
+      if (pausedRef.current) return;
 
-      // Generate OUTSIDE the state updater: updaters run during render,
-      // and side effects from inside one are a React error
       const rand = Math.random();
       let text;
 
-      if (rand > 0.97) {
-        // 3% newline
+      if (dozing) {
+        // Dozing: mostly z's and spaces, no real words
+        if (rand > 0.92) text = '\n';
+        else if (rand > 0.55) text = ' ';
+        else text = 'z';
+      } else if (rand > 0.97) {
         text = '\n';
       } else if (rand > 0.82) {
-        // 15% space
         text = ' ';
       } else if (rand > 0.72) {
-        // 10% real word from pool. PURE COSMETICS: detection income comes
-        // from the fixed-timestep accumulator in App.jsx (getDetectionsPerSecond),
-        // never from this render-coupled tick.
         const word = wordPool[Math.floor(Math.random() * wordPool.length)];
         text = word + ' ';
       } else {
-        // 72% random letters (gibberish)
         const letters = 'abcdefghijklmnopqrstuvwxyz';
         text = letters[Math.floor(Math.random() * letters.length)];
       }
@@ -141,7 +139,7 @@ export function Feed({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [startTime, totalMonkeys, wordPool]);
+  }, [startTime, totalMonkeys, wordPool, dozing]);
 
   /* Auto-scroll to bottom */
   useEffect(() => {
@@ -200,10 +198,11 @@ export function Feed({
       }
     }
 
-    // Show running indicator when text is being generated
-    const prefix = hasMonkeys
-      ? '>> Word detection engine......[running]\n'
-      : '>> Hire your first monkey below.\n';
+    const prefix = dozing
+      ? '>> Word detection engine......[dozing]\n'
+      : hasMonkeys
+        ? '>> Word detection engine......[running]\n'
+        : '>> Hire your first monkey below.\n';
 
     const fullText = prefix + textStream;
 

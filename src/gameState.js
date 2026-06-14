@@ -9,6 +9,7 @@ export const INITIAL_STATE = {
   resources: {
     words: 0,
     money: 30,        // Enough for first monkey purchase
+    bananas: 0,       // Unlocks at breeding alert (8 monkeys); 100 gifted at unlock
     marketingBudget: 0, // NEW: earned from text share milestones
     influence: 0,     // NEW: earned from text share milestones
     matter: 0,
@@ -71,6 +72,8 @@ export const ACTIONS = {
   RESET_GAME: 'RESET_GAME',
   UPDATE_SCHEDULER: 'UPDATE_SCHEDULER',
   SET_DRIFT: 'SET_DRIFT',
+  BUY_BANANAS: 'BUY_BANANAS',
+  CONSUME_BANANAS: 'CONSUME_BANANAS',
 };
 
 /* Reducer */
@@ -239,6 +242,25 @@ export function gameReducer(state = INITIAL_STATE, action) {
     case ACTIONS.PRESTIGE:
       // Prestige is unlocked in Phase 2
       return state;
+
+    case ACTIONS.BUY_BANANAS:
+      return {
+        ...state,
+        resources: {
+          ...state.resources,
+          bananas: state.resources.bananas + action.payload.count,
+          money: state.resources.money - action.payload.cost,
+        },
+      };
+
+    case ACTIONS.CONSUME_BANANAS:
+      return {
+        ...state,
+        resources: {
+          ...state.resources,
+          bananas: Math.max(0, state.resources.bananas - action.payload),
+        },
+      };
 
     case ACTIONS.RESET_GAME:
       return INITIAL_STATE;

@@ -13,7 +13,7 @@ import {
   createScheduler,
   scheduleNextGem,
 } from './scheduler';
-import { getNextCost, canAfford as canAffordUpgrade, getBreedingBonuses, getDetectionsPerSecond, UPGRADE_CONFIGS, DOLLARS_PER_WORD } from './economy';
+import { getNextCost, canAfford as canAffordUpgrade, getBreedingBonuses, getDetectionsPerSecond, getBananaConsumptionRate, UPGRADE_CONFIGS, DOLLARS_PER_WORD, BANANA_PRICE_BASE, BANANA_PRICE_MIN, BANANA_PRICE_MAX, BANANA_BUY_COUNT } from './economy';
 import { pickGemText } from './phrases';
 import { playDing, playNearMissSound, playSellSound, resumeAudioContext, startTypingAmbience, stopTypingAmbience } from './audio';
 import {
@@ -33,6 +33,14 @@ export function App() {
   const [currentAlert, setCurrentAlert] = useState(null);
   const [lastMarketingMilestone, setLastMarketingMilestone] = useState(0);
   const [injectedGem, setInjectedGem] = useState(null);
+  const [bananaPrice, setBananaPrice] = useState(BANANA_PRICE_BASE);
+  const [bananaBoat, setBananaBoat] = useState(false);
+  const [dozing, setDozing] = useState(false);
+  const bananaPriceRef = useRef(BANANA_PRICE_BASE);
+  const bananaBoatRef = useRef(false);
+  const bananaBoatEndRef = useRef(null);
+  const bananaConsumeAccRef = useRef(0);
+  const dozingRef = useRef(false);
   const schedulerRef = useRef(createScheduler());
   const startTimeRef = useRef(Date.now());
   const scriptStartRef = useRef(null);
@@ -140,18 +148,52 @@ export function App() {
     return () => document.removeEventListener('click', handleClick);
   }, []);
 
-  /* Typing ambience - scales with monkey count */
+  /* Banana price walk: mean-reverting random walk every 5s. Rare banana boat event. */
+  useEffect(() => {
+    if (!gameStarted || !breedingUnlocked) return;
+
+    const tick = setInterval(() => {
+      setBananaPrice(prev => {
+        const step = prev * 0.08;
+        const meanPull = (BANANA_PRICE_BASE - prev) * 0.15;
+        const change = (Math.random() * 2 - 1) * step + meanPull;
+        const next = Math.max(BANANA_PRICE_MIN, Math.min(BANANA_PRICE_MAX, prev + change));
+        bananaPriceRef.current = Math.round(next * 100) / 100;
+        return bananaPriceRef.current;
+      });
+
+      // ~3% chance per tick (~once every 2.5 min) for banana boat (50% off, 20s)
+      if (!bananaBoatRef.current && Math.random() < 0.03) {
+        bananaBoatRef.current = true;
+        setBananaBoat(true);
+        playDing(2);
+        addEvent('info', '🚢 BANANA BOAT ARRIVES! 50% off for 20s!');
+        bananaBoatEndRef.current = setTimeout(() => {
+          bananaBoatRef.current = false;
+          setBananaBoat(false);
+          addEvent('info', '🚢 Banana boat has sailed.');
+        }, 20000);
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(tick);
+      if (bananaBoatEndRef.current) clearTimeout(bananaBoatEndRef.current);
+    };
+  }, [gameStarted, breedingUnlocked]);
+
+  /* Typing ambience - scales with monkey count, silenced when dozing */
   useEffect(() => {
     const totalMonkeys = gameState.upgrades.monkeys;
 
-    if (gameStarted && totalMonkeys > 0) {
+    if (gameStarted && totalMonkeys > 0 && !dozing) {
       startTypingAmbience(totalMonkeys);
     } else {
       stopTypingAmbience();
     }
 
     return () => stopTypingAmbience();
-  }, [gameState.upgrades.monkeys, gameStarted]);
+  }, [gameState.upgrades.monkeys, gameStarted, dozing]);
 
   /* Main game loop: schedule gems, auto-sell words, breeding */
   useEffect(() => {
@@ -163,15 +205,17 @@ export function App() {
       // Check for breeding unlock at 8 monkeys
       if (!breedingUnlocked && totalMonkeys >= 8) {
         setBreedingUnlocked(true);
-        addEvent('info', '⚠️ ALERT: Monkeys have started breeding!');
-        addEvent('info', 'Population will now grow automatically...');
+        // Gift 100 starter bananas so the player has time to learn the system
+        dispatch({ type: ACTIONS.BUY_BANANAS, payload: { count: 100, cost: 0 } });
+        addEvent('info', '⚠️ ALERT: Monkeys have started breeding — and they\'re hungry!');
+        addEvent('info', 'Starter supply: 100 🍌 provided. Buy more to keep them typing.');
 
         setCurrentAlert({
           type: 'warning',
           icon: '🐵',
           title: 'Breeding Alert',
           message: 'The monkeys have reached critical mass and begun to reproduce.',
-          details: 'Population growth is now automatic and exponential.'
+          details: 'Population will now grow automatically. They also need bananas to keep typing — buy more before they doze off.'
         });
       }
 
@@ -296,6 +340,27 @@ export function App() {
         }
       }
 
+      /* Banana consumption (active once breeding unlocks) */
+      if (breedingUnlocked && totalMonkeys > 0) {
+        bananaConsumeAccRef.current += getBananaConsumptionRate(totalMonkeys) * 0.1;
+        const whole = Math.floor(bananaConsumeAccRef.current);
+        if (whole > 0) {
+          bananaConsumeAccRef.current -= whole;
+          dispatch({ type: ACTIONS.CONSUME_BANANAS, payload: whole });
+        }
+
+        const isDozingNow = gameState.resources.bananas <= 0;
+        if (isDozingNow !== dozingRef.current) {
+          dozingRef.current = isDozingNow;
+          setDozing(isDozingNow);
+          if (isDozingNow) {
+            addEvent('info', '🍌 Out of bananas — monkeys are dozing...');
+          } else {
+            addEvent('info', '🍌 Monkeys fed — back to work!');
+          }
+        }
+      }
+
       /* Breeding: monkeys naturally reproduce over time (unlocks at 8 monkeys) */
       const timeSinceLastBreeding = Date.now() - lastBreedingTimeRef.current;
       const habitatCount = gameState.upgrades.habitat || 0;
@@ -310,7 +375,8 @@ export function App() {
       const rateMultiplier = Math.max(1, numberOfPairs) * habitatRateBonus;
       const breedingInterval = Math.max(baseBreedingInterval / rateMultiplier, 8000); // Min 8s
 
-      if (breedingUnlocked && totalMonkeys >= 8 && timeSinceLastBreeding > breedingInterval) {
+      // Dozing monkeys don't breed
+      if (breedingUnlocked && totalMonkeys >= 8 && timeSinceLastBreeding > breedingInterval && !dozingRef.current) {
         // Each habitat level adds 1 offspring per birth (level 0=1, level 1=2, etc.)
         const offspring = 1 + habitatCount;
 
@@ -475,6 +541,15 @@ export function App() {
     }
   };
 
+  const handleBuyBananas = () => {
+    const effectivePrice = bananaBoat ? bananaPrice * 0.5 : bananaPrice;
+    const totalCost = Math.round(effectivePrice * BANANA_BUY_COUNT * 100) / 100;
+    if (gameState.resources.money >= totalCost) {
+      dispatch({ type: ACTIONS.BUY_BANANAS, payload: { count: BANANA_BUY_COUNT, cost: totalCost } });
+      addEvent('purchase', `Bought ${BANANA_BUY_COUNT} 🍌 for $${totalCost.toFixed(2)}`);
+    }
+  };
+
   const handleUpgradeBuy = (upgradeKey) => {
     const currentCount = upgradeKey === 'monkeys' ? (gameState.costBasis.monkeys || 0) : (gameState.upgrades[upgradeKey] || 0);
     const cost = getNextCost(upgradeKey, currentCount);
@@ -547,6 +622,7 @@ export function App() {
             startTime={startTimeRef.current}
             totalMonkeys={gameState.upgrades.monkeys}
             injectedGem={injectedGem}
+            dozing={dozing}
           />
         ) : (
           <SectorChart
@@ -560,7 +636,7 @@ export function App() {
         <StatusBox events={events} />
 
         {/* Stats */}
-        <Stats gameState={gameState} />
+        <Stats gameState={gameState} bananasVisible={breedingUnlocked} />
 
         {/* Sell button + Economy buttons */}
         <div className="economy">
@@ -573,6 +649,24 @@ export function App() {
             <span className="sell-count">{gameState.resources.words} words</span>
             <span className="sell-earnings">+${gameState.resources.words * DOLLARS_PER_WORD}</span>
           </button>
+
+          {breedingUnlocked && (() => {
+            const effectivePrice = bananaBoat ? bananaPrice * 0.5 : bananaPrice;
+            const totalCost = Math.round(effectivePrice * BANANA_BUY_COUNT * 100) / 100;
+            const canAffordBananas = gameState.resources.money >= totalCost;
+            return (
+              <button
+                className={`banana-button${bananaBoat ? ' boat-active' : ''}`}
+                onClick={handleBuyBananas}
+                disabled={!canAffordBananas}
+                title={`Buy ${BANANA_BUY_COUNT} bananas — $${totalCost.toFixed(2)}`}
+              >
+                {bananaBoat && <span className="banana-boat-tag">🚢 50% OFF</span>}
+                <span className="banana-label">Buy 100 🍌</span>
+                <span className="banana-price">${totalCost.toFixed(2)}</span>
+              </button>
+            );
+          })()}
 
           {upgradesToShow.map((upgradeKey) => {
             const currentCount = upgradeKey === 'monkeys' ? (gameState.costBasis.monkeys || 0) : (gameState.upgrades[upgradeKey] || 0);

@@ -76,6 +76,24 @@
   pointer-events: none;
 }
 
+.banana-time {
+  font-family: "Courier Prime", monospace;
+  font-size: 10px;
+  color: var(--secondary-text);
+  margin-top: 2px;
+}
+
+.banana-warning .stat-value,
+.banana-warning .banana-time {
+  color: var(--ribbon-ink);
+  animation: bananaPulse 1s ease-in-out infinite;
+}
+
+@keyframes bananaPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 @media (max-width: 600px) {
   .stats-panel {
     grid-template-columns: repeat(2, 1fr);

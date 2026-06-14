@@ -9,6 +9,11 @@ const UPGRADE_CONFIGS = {
 
 const DOLLARS_PER_WORD = 2; // $2 per word when sold
 
+export const BANANA_PRICE_BASE = 0.10;
+export const BANANA_PRICE_MIN  = 0.05;
+export const BANANA_PRICE_MAX  = 0.18;
+export const BANANA_BUY_COUNT  = 100;
+
 /* Calculate cost for the Nth purchase in a track (0-indexed) */
 export function getCost(upgradeKey, purchaseCount) {
   const config = UPGRADE_CONFIGS[upgradeKey];
@@ -82,6 +87,20 @@ export function getProductionMultiplier(upgrades) {
   // Caffeine: 1.1x per tier
   mult *= Math.pow(1.1, upgrades.caffeine);
   return mult;
+}
+
+/* Banana consumption rate (bananas/second). Sublinear to keep cost/income
+   curves from crossing as population scales. */
+export function getBananaConsumptionRate(totalMonkeys) {
+  if (totalMonkeys <= 0) return 0;
+  return Math.pow(totalMonkeys, 0.8) / 30;
+}
+
+/* Seconds of banana supply remaining */
+export function getBananaTimeRemaining(bananas, totalMonkeys) {
+  const rate = getBananaConsumptionRate(totalMonkeys);
+  if (rate <= 0) return Infinity;
+  return bananas / rate;
 }
 
 export { UPGRADE_CONFIGS, DOLLARS_PER_WORD };

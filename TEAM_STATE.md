@@ -6,7 +6,7 @@
 > If a step fails with "session limit" / token exhaustion, mark it BLOCKED
 > with a timestamp and stop — the hourly loop will retry it.
 
-Last updated: 2026-06-12 ~08:30 (local)
+Last updated: 2026-06-13 (local)
 
 ## Current branch / repo state
 - Repo: C:/Users/Owner/Documents/MillionMonkeys2 (github.com/Rob-o-matic/millionmonkeys)
@@ -94,11 +94,21 @@ Last updated: 2026-06-12 ~08:30 (local)
      pinned (paper unchanged at 15 monkeys incl. bred), no 360px overflow,
      all tap targets >= 48px (alert button's 43px reading was the
      modalSlideIn scale(0.9) mid-animation), zero console errors/warnings.
-5. **ON HOLD — DO NOT PUSH. Owner instruction 2026-06-12 20:14 UTC: "Don't
+5. **DONE 2026-06-13 — Banana economy (Act 1 tension layer).** Full
+   implementation per design spec: banana resource in gameState; sublinear
+   consumption rate (population^0.8 / 30 bananas/sec); mean-reverting price
+   walk ($0.05–$0.18, ±8% per 5s tick, 15% mean-pull); rare Banana Boat
+   event (~3%/tick, 50% off for 20s with ding); dozing state when bananas=0
+   (feed fills with zzz at 25% speed, ambience off, breeding paused, stat
+   shows "troop is dozing!" in amber); 100 starter bananas gifted at
+   breeding alert with updated alert copy; Buy 100 🍌 button gated at
+   breeding unlock; all verified in browser (doze, recovery, price display,
+   stat time-remaining). Build clean, no console errors. NOT yet committed.
+6. **ON HOLD — DO NOT PUSH. Owner instruction 2026-06-12 20:14 UTC: "Don't
    push until I say so."** No agent may run git push until the owner
    explicitly lifts this. When lifted: push branch + open PR per create-pr
    instructions (title + body, wrap URL in <pr-created></pr-created> tag).
-5. **DEFERRED — CLAUDE.md Phase 1 doc sync** (stale: lists Trained/Editor
+7. **DEFERRED — CLAUDE.md Phase 1 doc sync** (stale: lists Trained/Editor
    monkeys, $10 word value). Deliberately waits until the OWNER's manual
    playtest confirms the curve. Do not do this until owner confirms.
 

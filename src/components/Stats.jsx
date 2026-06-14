@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { tickNumber } from '../tickAnimation';
+import { getBananaTimeRemaining } from '../economy';
 import './Stats.css';
 
-export function Stats({ gameState }) {
+function formatBananaTime(seconds) {
+  if (seconds === Infinity) return '∞';
+  if (seconds <= 0) return '0s';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+export function Stats({ gameState, bananasVisible = false }) {
   const [displayWords, setDisplayWords] = useState(gameState.resources.words);
   const [displayMoney, setDisplayMoney] = useState(gameState.resources.money);
   /* Cancel handles: a superseded animation's watchdog must not snap the
@@ -27,6 +36,10 @@ export function Stats({ gameState }) {
   }, [gameState.resources.money, displayMoney]);
 
   const totalMonkeys = gameState.upgrades.monkeys || 0;
+  const bananas = gameState.resources.bananas || 0;
+  const bananaSeconds = getBananaTimeRemaining(bananas, totalMonkeys);
+  const bananaWarning = bananaSeconds < 60 && bananasVisible;
+
   const shakespearePercent = Math.min(
     (gameState.anthology.totalWordsEver / 100000) * 100,
     100
@@ -48,6 +61,18 @@ export function Stats({ gameState }) {
         <label>MONKEYS</label>
         <span className="stat-value">{totalMonkeys}</span>
       </div>
+
+      {bananasVisible && (
+        <div className={`stat${bananaWarning ? ' banana-warning' : ''}`}>
+          <label>BANANAS</label>
+          <span className="stat-value">{bananas} 🍌</span>
+          <span className="banana-time">
+            {bananas === 0
+              ? 'troop is dozing!'
+              : `feeds troop ${formatBananaTime(bananaSeconds)}`}
+          </span>
+        </div>
+      )}
 
       <div className="stat full-width">
         <label>SHAKESPEARE</label>
