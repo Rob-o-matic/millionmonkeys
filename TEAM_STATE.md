@@ -6,7 +6,7 @@
 > If a step fails with "session limit" / token exhaustion, mark it BLOCKED
 > with a timestamp and stop — the hourly loop will retry it.
 
-Last updated: 2026-06-14 (local) — P2-2 done (commit 9fa60df)
+Last updated: 2026-06-14 (local) — P2-3 done (commit 7517839)
 
 ## Current branch / repo state
 - Repo: C:/Users/Owner/Documents/MillionMonkeys2 (github.com/Rob-o-matic/millionmonkeys)
@@ -187,23 +187,19 @@ Key codebase facts agents MUST know before editing:
     - New Anthology.css: all CSS variables, frozen act-1 aesthetic.
     - 19/19 tests passing, build clean.
 
-11. **TODO — P2-3: Espresso Shot**
-    - Hot-streak event: a monkey "glows" at random intervals (60–180s,
-      uniform random) while not dozing and monkey count > 0.
-    - State in App.jsx (local useState): espressoAvailable(bool),
-      espressoActive(bool), espressoEndRef(useRef for timestamp).
-    - EspressoAvailable expires after 30s if not pressed.
-    - On press: if espressoActive → extend by 3s (cap at 20s total
-      remaining); else → start 10s burst. Update espressoEndRef.
-    - Detection loop: multiply getDetectionsPerSecond result × 3 when
-      espressoActive. Recalculate espressoActive each tick from endRef.
-    - Dozing overrides: espresso event never fires while dozing;
-      if dozing starts during a burst, end burst immediately.
-    - New EspressoButton.jsx: glowing monkey "☕" button with countdown
-      ring; appears only when espressoAvailable or espressoActive.
-    - EspressoButton.css: keyframe glow animation, countdown display.
-      All colors via CSS variables.
-    - 19+ tests passing, build clean, commit.
+11. **DONE 2026-06-14 — P2-3: Espresso Shot (commit 7517839)**
+    - Hot-streak event fires every 60–180s (uniform random) while not dozing.
+    - State: espressoAvailable/espressoActive (useState), with ref mirrors
+      (espressoActiveRef, espressoAvailableRef) for use in game loop / detection loop.
+    - Offer expires after 30s if not pressed.
+    - On press: if active → extend endRef by 3s (cap now+20s); else → start
+      10s burst, clear available, addEvent info.
+    - Detection loop: ×3 multiplier when espressoActiveRef.current is true.
+    - Dozing cancels both available and active state immediately.
+    - New EspressoButton.jsx + EspressoButton.css: pulsing glow animation when
+      available; countdown every 250ms when active. Returns null when neither.
+      All colors via CSS variables (--brass-ink). 48px min-height.
+    - 19/19 tests passing, build clean.
 
 12. **TODO — P2-4: Prestige ("Publish a Volume")**
     - Unlock condition: anthology.collected.length >= 5.
