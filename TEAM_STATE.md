@@ -6,7 +6,7 @@
 > If a step fails with "session limit" / token exhaustion, mark it BLOCKED
 > with a timestamp and stop — the hourly loop will retry it.
 
-Last updated: 2026-06-14 (local)
+Last updated: 2026-06-14 (local) — P2-1 done (commit 982cf48)
 
 ## Current branch / repo state
 - Repo: C:/Users/Owner/Documents/MillionMonkeys2 (github.com/Rob-o-matic/millionmonkeys)
@@ -145,7 +145,7 @@ Key codebase facts agents MUST know before editing:
 - Git: git -c user.name="Claude Fable 5" -c user.email="noreply@anthropic.com"
 - Branch: act1-economy-retune. Never git push.
 
-9.  **TODO — P2-1: Better Beans rename + Caffeination Dial**
+9.  **DONE 2026-06-14 — P2-1: Better Beans rename + Caffeination Dial (commit 982cf48)**
     - Rename UPGRADE_CONFIGS.caffeine.name 'Caffeine' → 'Better Beans'
       (key stays 'caffeine'; UpgradeButton.jsx description also updated)
     - Add 5-stop caffeination dial replacing the binary chaos param:
