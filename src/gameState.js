@@ -8,6 +8,7 @@ export const INITIAL_STATE = {
   act: 1,
   phase: 1, // NEW: 1 = breeding phase, 2 = information empire
   driftProgress: 0,
+  prestige: { count: 0 },
   resources: {
     words: 0,
     money: 30,        // Enough for first monkey purchase
@@ -249,9 +250,22 @@ export function gameReducer(state = INITIAL_STATE, action) {
         driftProgress: action.payload,
       };
 
-    case ACTIONS.PRESTIGE:
-      // Prestige is unlocked in Phase 2
-      return state;
+    case ACTIONS.PRESTIGE: {
+      const newCount = (state.prestige?.count ?? 0) + 1;
+      const tenureMonkeys = Math.min(newCount, 5);
+      return {
+        ...INITIAL_STATE,
+        prestige: { count: newCount },
+        anthology: {
+          ...INITIAL_STATE.anthology,
+          collected: state.anthology.collected ?? [],
+          totalWordsEver: state.anthology.totalWordsEver,
+        },
+        upgrades: { ...INITIAL_STATE.upgrades, monkeys: tenureMonkeys },
+        costBasis: { ...INITIAL_STATE.costBasis, monkeys: tenureMonkeys },
+        resources: { ...INITIAL_STATE.resources, money: 30 + newCount * 50 },
+      };
+    }
 
     case ACTIONS.BUY_BANANAS:
       return {

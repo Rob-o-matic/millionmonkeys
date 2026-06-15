@@ -1,0 +1,51 @@
+.prestige-area {
+  border-top: 1px solid var(--platen);
+  padding-top: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.prestige-btn {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ribbon-ink);
+  color: var(--ribbon-ink);
+  background: transparent;
+  border-radius: 4px;
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  font-family: "Courier Prime", monospace;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background-color var(--duration-fast), color var(--duration-fast);
+}
+
+.prestige-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ribbon-ink) 8%, transparent);
+}
+
+.prestige-btn:focus {
+  outline: 2px solid var(--ribbon-ink);
+  outline-offset: 2px;
+}
+
+.prestige-btn.armed {
+  background: color-mix(in srgb, var(--ribbon-ink) 12%, transparent);
+  font-weight: bold;
+}
+
+.prestige-btn.armed:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ribbon-ink) 20%, transparent);
+}
+
+.prestige-warning {
+  font-size: 10px;
+  color: var(--ribbon-ink);
+  margin-top: var(--space-xs);
+  text-align: center;
+  letter-spacing: 0.03em;
+}

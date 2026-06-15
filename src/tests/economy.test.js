@@ -9,6 +9,7 @@ import {
   getProductionMultiplier,
   DOLLARS_PER_WORD,
 } from '../economy';
+import { gameReducer, INITIAL_STATE, ACTIONS } from '../gameState';
 
 describe('Economy', () => {
   it('should sell words at $2 per word', () => {
@@ -61,5 +62,28 @@ describe('Economy', () => {
     expect(getProductionMultiplier({ monkeys: 1, caffeine: 0 })).toBe(1);
     expect(getProductionMultiplier({ monkeys: 1, caffeine: 1 })).toBeCloseTo(1.1, 5);
     expect(getProductionMultiplier({ monkeys: 1, caffeine: 3 })).toBeCloseTo(1.331, 3);
+  });
+});
+
+describe('Prestige reducer', () => {
+  it('should reset game state and apply tenure on PRESTIGE', () => {
+    const stateWithAnthology = {
+      ...INITIAL_STATE,
+      anthology: {
+        ...INITIAL_STATE.anthology,
+        collected: [{ text: 'such sweet sorrow', tier: 3, discoveredAt: 1000 }],
+        totalWordsEver: 10,
+      },
+      resources: { ...INITIAL_STATE.resources, words: 50, money: 200 },
+      upgrades: { ...INITIAL_STATE.upgrades, monkeys: 5 },
+    };
+
+    const newState = gameReducer(stateWithAnthology, { type: ACTIONS.PRESTIGE });
+
+    expect(newState.prestige.count).toBe(1);
+    expect(newState.upgrades.monkeys).toBe(1);
+    expect(newState.anthology.collected.length).toBe(1);
+    expect(newState.resources.money).toBe(80); // 30 + 1 * 50
+    expect(newState.resources.words).toBe(0);
   });
 });

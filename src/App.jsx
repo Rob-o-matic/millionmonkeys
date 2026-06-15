@@ -8,6 +8,7 @@ import { UpgradeButton } from './components/UpgradeButton';
 import { EngineIndicator } from './components/EngineIndicator';
 import { StatusBox } from './components/StatusBox';
 import { Anthology } from './components/Anthology';
+import { PrestigeButton } from './components/PrestigeButton';
 import { SectorChart } from './components/SectorChart';
 import { AlertModal } from './components/AlertModal';
 import { CaffeineDial } from './components/CaffeineDial';
@@ -741,6 +742,31 @@ export function App() {
     }
   };
 
+  const handlePrestige = () => {
+    const nextCount = (gameState.prestige?.count ?? 0) + 1;
+    const tenureMonkeys = Math.min(nextCount, 5);
+    const bonusMoney = 30 + nextCount * 50;
+    setCurrentAlert({
+      type: 'critical',
+      icon: '\u{1F4D6}',
+      title: `Volume ${nextCount} Published!`,
+      message: `Your anthology has been published. The academic world takes notice.`,
+      details: `Tenure granted: ${tenureMonkeys} monkey${tenureMonkeys !== 1 ? 's' : ''} kept. Starting funds: $${bonusMoney}. Anthology is permanent.`,
+      onDismiss: () => {
+        dispatch({ type: ACTIONS.PRESTIGE });
+        setBreedingUnlocked(false);
+        setGameStarted(false);
+        setEvents([]);
+        setPinnedAlert(null);
+        setCurrentAlert(null);
+        setDozing(false);
+        setBananaBoat(false);
+        setEspressoAvailable(false);
+        setEspressoActive(false);
+      },
+    });
+  };
+
   /* Caffeination Dial — derive effective tier weights from dial state */
   const dialStop = gameState.scheduler.caffeineDialStop ?? 2;
   const dialMetabolizing = gameState.scheduler.caffeineDialMetabolizing ?? false;
@@ -838,6 +864,14 @@ export function App() {
 
         {/* Anthology */}
         <Anthology collected={gameState.anthology.collected ?? []} />
+
+        {/* Prestige — unlocks when 5+ entries collected */}
+        {(gameState.anthology.collected?.length ?? 0) >= 5 && (
+          <PrestigeButton
+            collectedCount={gameState.anthology.collected.length}
+            onPrestige={handlePrestige}
+          />
+        )}
 
         {/* Sell button + Economy buttons */}
         <div className="economy">
