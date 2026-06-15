@@ -6,11 +6,11 @@
 > If a step fails with "session limit" / token exhaustion, mark it BLOCKED
 > with a timestamp and stop — the hourly loop will retry it.
 
-Last updated: 2026-06-13 (local)
+Last updated: 2026-06-14 (local)
 
 ## Current branch / repo state
 - Repo: C:/Users/Owner/Documents/MillionMonkeys2 (github.com/Rob-o-matic/millionmonkeys)
-- Branch: `act1-economy-retune` — 3 commits ahead of origin/main, NOT pushed
+- Branch: `act1-economy-retune` — 5 commits ahead of origin/main, NOT pushed
   (push blocked on interactive GitHub sign-in; owner will authenticate later;
   agents must NOT attempt workarounds, just retry `git push -u origin act1-economy-retune`
   and move on if it fails)
@@ -104,11 +104,27 @@ Last updated: 2026-06-13 (local)
    breeding alert with updated alert copy; Buy 100 🍌 button gated at
    breeding unlock; all verified in browser (doze, recovery, price display,
    stat time-remaining). Build clean, no console errors. NOT yet committed.
-6. **ON HOLD — DO NOT PUSH. Owner instruction 2026-06-12 20:14 UTC: "Don't
+6. **DONE 2026-06-14 — Round 4: UX clarity + Word Counter (commit db51c8a).**
+   Found uncommitted changes from a prior session; audited, corrected, and
+   committed. Changes kept:
+   - StatusBox: pinned persistent alerts (Banana Boat / Breeding Alert);
+     now shows last 7 events (was 3).
+   - UpgradeButton: "$X more needed" deficit display when unaffordable.
+   - Banana: proactive low-supply warning fires at <90s remaining
+     (throttled: max once per 120s); doze-recovery resets the throttle.
+   - Word Counter upgrade ($350/1.15x): +5% detection per level + WPM
+     display; unlocks after first caffeine purchase or 90s play.
+   - TIER_WORD_MULTIPLIERS in gameState.js (tier-aware HARVEST_WORD
+     reducer, but no caller passes a tier yet — income defaults to 1x).
+   Changes REVERTED (loop-rule violations):
+   - Monkey cost: $15/1.18x → restored $30/1.25x (loop rule).
+   - Breeding starter gift: 30 → 100 bananas (established in round 5 commit).
+   19/19 tests, build clean.
+7. **ON HOLD — DO NOT PUSH. Owner instruction 2026-06-12 20:14 UTC: "Don't
    push until I say so."** No agent may run git push until the owner
    explicitly lifts this. When lifted: push branch + open PR per create-pr
    instructions (title + body, wrap URL in <pr-created></pr-created> tag).
-7. **DEFERRED — CLAUDE.md Phase 1 doc sync** (stale: lists Trained/Editor
+8. **DEFERRED — CLAUDE.md Phase 1 doc sync** (stale: lists Trained/Editor
    monkeys, $10 word value). Deliberately waits until the OWNER's manual
    playtest confirms the curve. Do not do this until owner confirms.
 
