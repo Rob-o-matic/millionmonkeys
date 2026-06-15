@@ -21,26 +21,26 @@ export function scaleByMonkeys(interval, monkeyCount) {
   return Math.max(scaled, floor);
 }
 
-/* Get next gem tier (probability-weighted after scripting) */
-function selectTier(chaos = 0) {
-  // chaos: 0 = trained, 1 = chaotic
-  // Trained: Tier 1–3 fast, Tier 4 slow
-  // Chaotic: reverse
-  if (chaos < 0.5) {
-    // Trained: 50% T1, 35% T2, 12% T3, 3% T4
-    const roll = Math.random();
-    if (roll < 0.5) return 1;
-    if (roll < 0.85) return 2;
-    if (roll < 0.97) return 3;
-    return 4;
-  } else {
-    // Chaotic: 3% T1, 12% T2, 35% T3, 50% T4
-    const roll = Math.random();
-    if (roll < 0.03) return 1;
-    if (roll < 0.15) return 2;
-    if (roll < 0.5) return 3;
-    return 4;
+/* 5-stop caffeination dial — each stop blends gem-tier probabilities.
+   Decaf = safe common words; The Jitters = risky rare anomalies. */
+export const CAFFEINE_DIAL_STOPS = [
+  { label: 'Decaf',       weights: [0.83, 0.15, 0.02, 0.00] },
+  { label: 'Mild',        weights: [0.68, 0.23, 0.08, 0.01] },
+  { label: 'Regular',     weights: [0.50, 0.35, 0.12, 0.03] },
+  { label: 'Strong',      weights: [0.40, 0.28, 0.23, 0.09] },
+  { label: 'The Jitters', weights: [0.25, 0.26, 0.32, 0.17] },
+];
+
+/* Get next gem tier using a weight array [tier1, tier2, tier3, tier4] */
+function selectTier(weights) {
+  const roll = Math.random();
+  let cumulative = 0;
+  for (let i = 0; i < weights.length; i++) {
+    cumulative += weights[i];
+    if (roll < cumulative) return i + 1;
   }
+  // Fallback to last tier if floating-point rounding leaves a gap
+  return weights.length;
 }
 
 /* Create a scheduler instance */
@@ -57,10 +57,10 @@ export function scheduleNextGem(
   scheduler,
   currentTime,
   monkeyCount = 1,
-  chaos = 0,
+  tierWeights = CAFFEINE_DIAL_STOPS[2].weights,
   isScripted = false
 ) {
-  let tier = selectTier(chaos);
+  let tier = selectTier(tierWeights);
 
   // Check pity timers
   Object.keys(GEM_TIERS).forEach((t) => {

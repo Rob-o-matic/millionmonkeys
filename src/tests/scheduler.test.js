@@ -9,6 +9,7 @@ import {
   getBaseInterval,
   scaleByMonkeys,
   MAX_GEM_INTERVAL_MS,
+  CAFFEINE_DIAL_STOPS,
 } from '../scheduler';
 
 describe('Scheduler', () => {
@@ -25,7 +26,7 @@ describe('Scheduler', () => {
 
   it('should schedule next gem with delay in base interval range', () => {
     const currentTime = 0;
-    const result = scheduleNextGem(scheduler, currentTime, 1, 0, false);
+    const result = scheduleNextGem(scheduler, currentTime, 1, CAFFEINE_DIAL_STOPS[2].weights, false);
 
     expect(result.tier).toBeGreaterThanOrEqual(1);
     expect(result.tier).toBeLessThanOrEqual(4);
@@ -50,27 +51,27 @@ describe('Scheduler', () => {
     expect(getGraceWindow(5)).toBe(Infinity);
   });
 
-  it('should select tiers by chaos setting', () => {
-    // Trained: should favor lower tiers
-    const trainedTiers = [];
+  it('should select tiers by dial stop setting', () => {
+    // Decaf: should favor lower tiers
+    const decafTiers = [];
     for (let i = 0; i < 100; i++) {
-      const result = scheduleNextGem(scheduler, i * 1000, 1, 0, false);
-      trainedTiers.push(result.tier);
+      const result = scheduleNextGem(scheduler, i * 1000, 1, CAFFEINE_DIAL_STOPS[0].weights, false);
+      decafTiers.push(result.tier);
     }
-    const trainedAvg =
-      trainedTiers.reduce((a, b) => a + b) / trainedTiers.length;
+    const decafAvg =
+      decafTiers.reduce((a, b) => a + b) / decafTiers.length;
 
-    // Chaotic: should favor higher tiers
+    // The Jitters: should favor higher tiers
     scheduler = createScheduler();
-    const chaoticTiers = [];
+    const jittersTiers = [];
     for (let i = 0; i < 100; i++) {
-      const result = scheduleNextGem(scheduler, i * 1000, 1, 1, false);
-      chaoticTiers.push(result.tier);
+      const result = scheduleNextGem(scheduler, i * 1000, 1, CAFFEINE_DIAL_STOPS[4].weights, false);
+      jittersTiers.push(result.tier);
     }
-    const chaoticAvg =
-      chaoticTiers.reduce((a, b) => a + b) / chaoticTiers.length;
+    const jittersAvg =
+      jittersTiers.reduce((a, b) => a + b) / jittersTiers.length;
 
-    expect(chaoticAvg).toBeGreaterThan(trainedAvg);
+    expect(jittersAvg).toBeGreaterThan(decafAvg);
   });
 
   it('should never schedule a non-scripted gap above MAX_GEM_INTERVAL_MS', () => {
@@ -79,7 +80,7 @@ describe('Scheduler', () => {
        capped at the Act 1 cadence ceiling (45s) */
     expect(MAX_GEM_INTERVAL_MS).toBe(45000);
     for (let i = 0; i < 500; i++) {
-      const result = scheduleNextGem(scheduler, i * 1000, 1, 1, false); // chaos=1: mostly tier 3/4
+      const result = scheduleNextGem(scheduler, i * 1000, 1, CAFFEINE_DIAL_STOPS[4].weights, false); // The Jitters: mostly tier 3/4
       expect(result.delay).toBeLessThanOrEqual(MAX_GEM_INTERVAL_MS);
     }
   });

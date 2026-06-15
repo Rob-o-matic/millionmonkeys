@@ -43,8 +43,12 @@ export const INITIAL_STATE = {
       tier3: 0,
       tier4: 0,
     },
-    chaos: 0, // 0 = trained, 1 = chaotic
+    chaos: 0, // 0 = trained, 1 = chaotic (legacy — superseded by caffeineDialStop)
     lastRetrain: 0,
+    caffeineDialStop: 2,           // 0=Decaf … 4=The Jitters; default Regular
+    caffeineDialMetabolizing: false,
+    caffeineDialMetabolizeEnd: null,
+    caffeineDialPendingStop: null,
   },
   ui: {
     shakespeareProgress: 0,

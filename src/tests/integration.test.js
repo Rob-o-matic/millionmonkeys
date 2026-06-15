@@ -2,7 +2,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { gameReducer, INITIAL_STATE, ACTIONS } from '../gameState';
-import { createScheduler, scheduleNextGem, scaleByMonkeys } from '../scheduler';
+import { createScheduler, scheduleNextGem, scaleByMonkeys, CAFFEINE_DIAL_STOPS } from '../scheduler';
 import { getTotalMonkeys, getCost, DOLLARS_PER_WORD } from '../economy';
 
 /* Deterministic PRNG (mulberry32): the 60s sim draws gem tiers/intervals
@@ -54,7 +54,7 @@ describe('Economy Simulation', () => {
       /* Schedule and harvest gems */
       if (currentTime >= scheduler.nextGemTime) {
         const totalMonkeys = getTotalMonkeys(state.upgrades);
-        scheduleNextGem(scheduler, currentTime, totalMonkeys, 0, false);
+        scheduleNextGem(scheduler, currentTime, totalMonkeys, CAFFEINE_DIAL_STOPS[2].weights, false);
 
         /* Harvest one word, then sell inventory */
         state = gameReducer(state, {

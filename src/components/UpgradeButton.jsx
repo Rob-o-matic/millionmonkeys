@@ -5,7 +5,7 @@ import './UpgradeButton.css';
 const UPGRADE_DESCRIPTIONS = {
   monkeys: '+1 typist',
   habitat: '+10% breeding',
-  caffeine: '+10% word detection',
+  caffeine: '+10% word detection (unlocks Caffeination Dial)',
   salesMonkey: 'Auto-sells every 5s',
   wordCounter: '+5% word detection + WPM display',
 };

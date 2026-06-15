@@ -9,9 +9,11 @@ import { EngineIndicator } from './components/EngineIndicator';
 import { StatusBox } from './components/StatusBox';
 import { SectorChart } from './components/SectorChart';
 import { AlertModal } from './components/AlertModal';
+import { CaffeineDial } from './components/CaffeineDial';
 import {
   createScheduler,
   scheduleNextGem,
+  CAFFEINE_DIAL_STOPS,
 } from './scheduler';
 import { getNextCost, canAfford as canAffordUpgrade, getBreedingBonuses, getDetectionsPerSecond, getBananaConsumptionRate, getBananaTimeRemaining, UPGRADE_CONFIGS, DOLLARS_PER_WORD, BANANA_PRICE_BASE, BANANA_PRICE_MIN, BANANA_PRICE_MAX, BANANA_BUY_COUNT } from './economy';
 import { pickGemText } from './phrases';
@@ -207,6 +209,23 @@ export function App() {
       const scheduler = schedulerRef.current;
       const totalMonkeys = gameState.upgrades.monkeys;
 
+      /* Caffeination Dial metabolize completion check */
+      if (
+        gameState.scheduler.caffeineDialMetabolizing &&
+        gameState.scheduler.caffeineDialMetabolizeEnd !== null &&
+        Date.now() > gameState.scheduler.caffeineDialMetabolizeEnd
+      ) {
+        dispatch({
+          type: ACTIONS.UPDATE_SCHEDULER,
+          payload: {
+            caffeineDialStop: gameState.scheduler.caffeineDialPendingStop,
+            caffeineDialMetabolizing: false,
+            caffeineDialMetabolizeEnd: null,
+            caffeineDialPendingStop: null,
+          },
+        });
+      }
+
       // Check for breeding unlock at 8 monkeys
       if (!breedingUnlocked && totalMonkeys >= 8) {
         setBreedingUnlocked(true);
@@ -304,9 +323,9 @@ export function App() {
           // One-time seed: schedule the first post-script gem instead of
           // firing one the instant the scripted window ends
           scheduler.postScriptInit = true;
-          scheduleNextGem(scheduler, scriptTime, totalMonkeys, 0, false);
+          scheduleNextGem(scheduler, scriptTime, totalMonkeys, effectiveTierWeights, false);
         } else if (scriptTime >= scheduler.nextGemTime) {
-          const { tier } = scheduleNextGem(scheduler, scriptTime, totalMonkeys, 0, false);
+          const { tier } = scheduleNextGem(scheduler, scriptTime, totalMonkeys, effectiveTierWeights, false);
           /* MIN_GEM_GAP_MS = 8000: scaleByMonkeys floors tier-1 intervals at
              ~0.5-1.5s at scale, which would pause the feed ~40% of the time
              (each injection pauses the stream 400ms) and add uncontrolled
@@ -594,6 +613,26 @@ export function App() {
     }
   };
 
+  /* Caffeination Dial — derive effective tier weights from dial state */
+  const dialStop = gameState.scheduler.caffeineDialStop ?? 2;
+  const dialMetabolizing = gameState.scheduler.caffeineDialMetabolizing ?? false;
+  const dialMetabolizeEnd = gameState.scheduler.caffeineDialMetabolizeEnd ?? null;
+  const effectiveTierWeights = dozing
+    ? CAFFEINE_DIAL_STOPS[0].weights  // Decaf while dozing
+    : CAFFEINE_DIAL_STOPS[dialStop].weights;
+
+  const handleDialChange = (newStop) => {
+    if (dialMetabolizing || dozing) return;
+    dispatch({
+      type: ACTIONS.UPDATE_SCHEDULER,
+      payload: {
+        caffeineDialMetabolizing: true,
+        caffeineDialMetabolizeEnd: Date['now']() + 60000,
+        caffeineDialPendingStop: newStop,
+      },
+    });
+  };
+
   const upgradesToShow = Object.keys(UPGRADE_CONFIGS).filter(key => {
     // Habitat only shows after breeding unlocks
     if (key === 'habitat') {
@@ -718,6 +757,16 @@ export function App() {
               />
             );
           })}
+
+          {gameState.upgrades.caffeine >= 1 && (
+            <CaffeineDial
+              stop={dialStop}
+              metabolizing={dialMetabolizing}
+              metabolizeEnd={dialMetabolizeEnd}
+              dozing={dozing}
+              onSelect={handleDialChange}
+            />
+          )}
         </div>
           </div>
         </>
