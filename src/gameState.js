@@ -2,6 +2,8 @@
 
 import { DOLLARS_PER_WORD } from './economy';
 
+export const TIER_WORD_MULTIPLIERS = { 1: 1, 2: 3, 3: 7.5, 4: 20 };
+
 export const INITIAL_STATE = {
   act: 1,
   phase: 1, // NEW: 1 = breeding phase, 2 = information empire
@@ -88,8 +90,9 @@ export function gameReducer(state = INITIAL_STATE, action) {
         },
       };
 
-    case ACTIONS.HARVEST_WORD:
+    case ACTIONS.HARVEST_WORD: {
       const wordCount = action.payload.count || 1;
+      const tierMult = TIER_WORD_MULTIPLIERS[action.payload.tier || 1] || 1;
       return {
         ...state,
         anthology: {
@@ -106,9 +109,10 @@ export function gameReducer(state = INITIAL_STATE, action) {
         },
         resources: {
           ...state.resources,
-          words: state.resources.words + wordCount,
+          words: state.resources.words + wordCount * tierMult,
         },
       };
+    }
 
     case ACTIONS.SELL_WORDS:
       // Convert all words to money at fixed rate

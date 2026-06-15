@@ -5,6 +5,7 @@ const UPGRADE_CONFIGS = {
   habitat: { baseCost: 500, costMult: 1.15, name: 'Upgrade Habitat' },
   caffeine: { baseCost: 60, costMult: 2.0, name: 'Caffeine' },
   salesMonkey: { baseCost: 2000, costMult: 1.15, name: 'Sales Monkey' },
+  wordCounter: { baseCost: 350, costMult: 1.15, name: 'Word Counter' },
 };
 
 const DOLLARS_PER_WORD = 2; // $2 per word when sold
@@ -50,7 +51,7 @@ export function getBreedingBonuses(habitatCount) {
    App.jsx) so it never depends on render throughput or timer throttling.
    For M < 10 this reduces to 0.25 * M * 1.1^caffeine detections/sec
    (= $0.50 * M * 1.1^c per sec at $2/word). */
-export function getDetectionsPerSecond(totalMonkeys, caffeineCount) {
+export function getDetectionsPerSecond(totalMonkeys, caffeineCount, wordCounterLevel = 0) {
   if (totalMonkeys <= 0) return 0;
 
   const baseInterval = 40;
@@ -73,7 +74,7 @@ export function getDetectionsPerSecond(totalMonkeys, caffeineCount) {
   );
 
   // 10% of ticks emit a real word; each has detectChance to be harvested
-  return ticksPerSec * 0.10 * detectChance;
+  return ticksPerSec * 0.10 * detectChance * (1 + 0.05 * wordCounterLevel);
 }
 
 /* Calculate total monkeys (active producers) */

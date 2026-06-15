@@ -13,7 +13,7 @@ import {
   createScheduler,
   scheduleNextGem,
 } from './scheduler';
-import { getNextCost, canAfford as canAffordUpgrade, getBreedingBonuses, getDetectionsPerSecond, getBananaConsumptionRate, UPGRADE_CONFIGS, DOLLARS_PER_WORD, BANANA_PRICE_BASE, BANANA_PRICE_MIN, BANANA_PRICE_MAX, BANANA_BUY_COUNT } from './economy';
+import { getNextCost, canAfford as canAffordUpgrade, getBreedingBonuses, getDetectionsPerSecond, getBananaConsumptionRate, getBananaTimeRemaining, UPGRADE_CONFIGS, DOLLARS_PER_WORD, BANANA_PRICE_BASE, BANANA_PRICE_MIN, BANANA_PRICE_MAX, BANANA_BUY_COUNT } from './economy';
 import { pickGemText } from './phrases';
 import { playDing, playNearMissSound, playSellSound, resumeAudioContext, startTypingAmbience, stopTypingAmbience } from './audio';
 import {
@@ -36,11 +36,13 @@ export function App() {
   const [bananaPrice, setBananaPrice] = useState(BANANA_PRICE_BASE);
   const [bananaBoat, setBananaBoat] = useState(false);
   const [dozing, setDozing] = useState(false);
+  const [pinnedAlert, setPinnedAlert] = useState(null);
   const bananaPriceRef = useRef(BANANA_PRICE_BASE);
   const bananaBoatRef = useRef(false);
   const bananaBoatEndRef = useRef(null);
   const bananaConsumeAccRef = useRef(0);
   const dozingRef = useRef(false);
+  const lastBananaWarnRef = useRef(0);
   const schedulerRef = useRef(createScheduler());
   const startTimeRef = useRef(Date.now());
   const scriptStartRef = useRef(null);
@@ -59,10 +61,11 @@ export function App() {
   const lastDetectionTickRef = useRef(null);
   /* Assigned every render so the detection interval reads fresh values
      without effect churn */
-  const liveStateRef = useRef({ monkeys: 0, caffeine: 0 });
+  const liveStateRef = useRef({ monkeys: 0, caffeine: 0, wordCounter: 0 });
   liveStateRef.current = {
     monkeys: gameState.upgrades.monkeys,
     caffeine: gameState.upgrades.caffeine,
+    wordCounter: gameState.upgrades.wordCounter || 0,
   };
 
   /* Load dictionary on mount */
@@ -168,9 +171,11 @@ export function App() {
         setBananaBoat(true);
         playDing(2);
         addEvent('info', '🚢 BANANA BOAT ARRIVES! 50% off for 20s!');
+        setPinnedAlert({ message: '🚢 BANANA BOAT: 50% off bananas — 20s remaining', type: 'info' });
         bananaBoatEndRef.current = setTimeout(() => {
           bananaBoatRef.current = false;
           setBananaBoat(false);
+          setPinnedAlert(null);
           addEvent('info', '🚢 Banana boat has sailed.');
         }, 20000);
       }
@@ -209,13 +214,18 @@ export function App() {
         dispatch({ type: ACTIONS.BUY_BANANAS, payload: { count: 100, cost: 0 } });
         addEvent('info', '⚠️ ALERT: Monkeys have started breeding — and they\'re hungry!');
         addEvent('info', 'Starter supply: 100 🍌 provided. Buy more to keep them typing.');
+        setPinnedAlert({ message: '⚠️ BREEDING ALERT: monkeys are hungry — buy bananas', type: 'info' });
 
         setCurrentAlert({
           type: 'warning',
           icon: '🐵',
           title: 'Breeding Alert',
           message: 'The monkeys have reached critical mass and begun to reproduce.',
-          details: 'Population will now grow automatically. They also need bananas to keep typing — buy more before they doze off.'
+          details: 'Population will now grow automatically. They also need bananas to keep typing — buy more before they doze off.',
+          onDismiss: () => {
+            setCurrentAlert(null);
+            setPinnedAlert(null);
+          },
         });
       }
 
@@ -357,6 +367,17 @@ export function App() {
             addEvent('info', '🍌 Out of bananas — monkeys are dozing...');
           } else {
             addEvent('info', '🍌 Monkeys fed — back to work!');
+            lastBananaWarnRef.current = 0; // reset so warning can fire again when low
+          }
+        }
+
+        // Proactive banana-low warning: fire at most once per 120s when supply < 90s
+        if (!isDozingNow && gameState.resources.bananas > 0) {
+          const bananaSeconds = getBananaTimeRemaining(gameState.resources.bananas, totalMonkeys);
+          const now = Date.now();
+          if (bananaSeconds < 90 && now - lastBananaWarnRef.current > 120000) {
+            lastBananaWarnRef.current = now;
+            addEvent('info', '🍌 Bananas running low — troop gets restless in ~90s');
           }
         }
       }
@@ -458,7 +479,7 @@ export function App() {
 
     const detectionLoop = setInterval(() => {
       const now = Date.now();
-      const { monkeys, caffeine } = liveStateRef.current;
+      const { monkeys, caffeine, wordCounter } = liveStateRef.current;
 
       if (monkeys === 0) {
         lastDetectionTickRef.current = now;
@@ -473,7 +494,7 @@ export function App() {
       lastDetectionTickRef.current = now;
 
       detectionAccRef.current +=
-        getDetectionsPerSecond(monkeys, caffeine) * elapsedSec;
+        getDetectionsPerSecond(monkeys, caffeine, wordCounter) * elapsedSec;
 
       let whole = Math.floor(detectionAccRef.current);
       detectionAccRef.current -= whole;
@@ -588,6 +609,10 @@ export function App() {
       if (gameState.upgrades.salesMonkey > 0) return false;
       return gameState.resources.money >= 500 || Date.now() - startTimeRef.current > 300000;
     }
+    // Word Counter appears after caffeine is purchased or after 90s of play
+    if (key === 'wordCounter') {
+      return gameState.upgrades.caffeine >= 1 || Date.now() - startTimeRef.current > 90000;
+    }
     return true;
   });
 
@@ -596,7 +621,13 @@ export function App() {
       {currentAlert && (
         <AlertModal
           alert={currentAlert}
-          onDismiss={() => setCurrentAlert(null)}
+          onDismiss={() => {
+            if (currentAlert.onDismiss) {
+              currentAlert.onDismiss();
+            } else {
+              setCurrentAlert(null);
+            }
+          }}
         />
       )}
       {showIndicator && (
@@ -633,7 +664,7 @@ export function App() {
         )}
 
         {/* Status Box */}
-        <StatusBox events={events} />
+        <StatusBox events={events} pinnedAlert={pinnedAlert} />
 
         {/* Stats */}
         <Stats gameState={gameState} bananasVisible={breedingUnlocked} />

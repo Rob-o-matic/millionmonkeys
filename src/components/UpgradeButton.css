@@ -73,6 +73,14 @@
   font-weight: bold;
 }
 
+.upgrade-deficit {
+  font-size: 9px;
+  color: var(--secondary-text);
+  font-weight: normal;
+  letter-spacing: 0.02em;
+  margin-top: 1px;
+}
+
 /* Affordability progress: bottom-edge fill on unaffordable buttons */
 .upgrade-progress {
   position: absolute;

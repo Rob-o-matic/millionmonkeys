@@ -7,6 +7,7 @@ const UPGRADE_DESCRIPTIONS = {
   habitat: '+10% breeding',
   caffeine: '+10% word detection',
   salesMonkey: 'Auto-sells every 5s',
+  wordCounter: '+5% word detection + WPM display',
 };
 
 export function UpgradeButton({
@@ -42,6 +43,7 @@ export function UpgradeButton({
       {showCount && upgradeCount > 0 && <span className="upgrade-count">×{upgradeCount}</span>}
       <span className="upgrade-desc">{desc}</span>
       <span className="upgrade-cost">${cost.toLocaleString()}</span>
+      {!canAfford && money > 0 && <span className="upgrade-deficit">${(cost - money).toLocaleString(undefined, {maximumFractionDigits:0})} more needed</span>}
       {!canAfford && (
         <span
           className="upgrade-progress"
