@@ -375,9 +375,9 @@ export function App() {
         if (!isDozingNow && gameState.resources.bananas > 0) {
           const bananaSeconds = getBananaTimeRemaining(gameState.resources.bananas, totalMonkeys);
           const now = Date.now();
-          if (bananaSeconds < 90 && now - lastBananaWarnRef.current > 120000) {
+          if (bananaSeconds < 40 && now - lastBananaWarnRef.current > 120000) {
             lastBananaWarnRef.current = now;
-            addEvent('info', '🍌 Bananas running low — troop gets restless in ~90s');
+            addEvent('info', '🍌 Bananas running low — troop gets restless in ~40s');
           }
         }
       }

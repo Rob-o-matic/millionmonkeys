@@ -94,7 +94,7 @@ export function getProductionMultiplier(upgrades) {
    curves from crossing as population scales. */
 export function getBananaConsumptionRate(totalMonkeys) {
   if (totalMonkeys <= 0) return 0;
-  return Math.pow(totalMonkeys, 0.8) / 30;
+  return Math.pow(totalMonkeys, 0.8) / 15;
 }
 
 /* Seconds of banana supply remaining */
