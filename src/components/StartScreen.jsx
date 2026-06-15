@@ -31,6 +31,7 @@ export function StartScreen({ onStart }) {
 
         <div className="start-footer">
           <p>Funded by the Institute for Improbable Literature</p>
+          <p className="start-version">build {__COMMIT__}</p>
         </div>
       </div>
     </div>

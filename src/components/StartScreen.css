@@ -111,6 +111,12 @@
   margin: 0;
 }
 
+.start-version {
+  margin-top: var(--space-sm) !important;
+  opacity: 0.45;
+  font-size: 11px;
+}
+
 @media (max-width: 600px) {
   .start-content {
     padding: var(--space-lg);
