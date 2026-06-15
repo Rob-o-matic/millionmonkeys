@@ -1,0 +1,59 @@
+/* EspressoButton — Espresso Shot hot-streak event */
+
+@keyframes espressoGlow {
+  0%, 100% {
+    box-shadow: 0 0 4px 1px color-mix(in srgb, var(--brass-ink) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 12px 4px color-mix(in srgb, var(--brass-ink) 60%, transparent);
+  }
+}
+
+.espresso-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--brass-ink);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--brass-ink);
+  font-family: "Courier Prime", monospace;
+  font-size: 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background-color var(--duration-fast);
+}
+
+.espresso-btn:active {
+  transform: translateY(1px);
+}
+
+.espresso-btn:focus {
+  outline: 2px solid var(--ribbon-ink);
+  outline-offset: 2px;
+}
+
+.espresso-available {
+  animation: espressoGlow 1.2s ease-in-out infinite;
+}
+
+.espresso-active {
+  background: color-mix(in srgb, var(--brass-ink) 12%, transparent);
+  font-weight: bold;
+}
+
+.espresso-btn__label {
+  display: block;
+}
+
+.espresso-btn__countdown {
+  display: block;
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: var(--space-xs);
+}

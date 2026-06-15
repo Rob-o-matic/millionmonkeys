@@ -11,6 +11,7 @@ import { Anthology } from './components/Anthology';
 import { SectorChart } from './components/SectorChart';
 import { AlertModal } from './components/AlertModal';
 import { CaffeineDial } from './components/CaffeineDial';
+import { EspressoButton } from './components/EspressoButton';
 import {
   createScheduler,
   scheduleNextGem,
@@ -40,6 +41,13 @@ export function App() {
   const [bananaBoat, setBananaBoat] = useState(false);
   const [dozing, setDozing] = useState(false);
   const [pinnedAlert, setPinnedAlert] = useState(null);
+  const [espressoAvailable, setEspressoAvailable] = useState(false);
+  const [espressoActive, setEspressoActive] = useState(false);
+  const espressoEndRef = useRef(0);
+  const espressoAvailUntilRef = useRef(0);
+  const nextEspressoRef = useRef(0);
+  const espressoActiveRef = useRef(false);
+  const espressoAvailableRef = useRef(false);
   const bananaPriceRef = useRef(BANANA_PRICE_BASE);
   const bananaBoatRef = useRef(false);
   const bananaBoatEndRef = useRef(null);
@@ -71,6 +79,8 @@ export function App() {
     caffeine: gameState.upgrades.caffeine,
     wordCounter: gameState.upgrades.wordCounter || 0,
   };
+  espressoActiveRef.current = espressoActive;
+  espressoAvailableRef.current = espressoAvailable;
 
   /* Live anthology length for page-bonus checks in stable callbacks */
   const liveAnthologyLengthRef = useRef(0);
@@ -133,6 +143,8 @@ export function App() {
       schedulerRef.current.nextGemTime = 2000; // First gem at 2 seconds
       lastHarvestTimeRef.current = {};
       setElapsedSeconds(0);
+      // Seed first espresso event: 60–180s after game start
+      nextEspressoRef.current = Date.now() + 60000 + Math.random() * 120000;
     }
   }, [gameStarted]);
 
@@ -409,6 +421,44 @@ export function App() {
         }
       }
 
+      /* Espresso Shot hot-streak event */
+      const now = Date.now();
+
+      // Spawn event: not dozing, monkeys > 0, not active, not available, time reached
+      if (
+        !dozingRef.current &&
+        totalMonkeys > 0 &&
+        !espressoActiveRef.current &&
+        !espressoAvailableRef.current &&
+        now >= nextEspressoRef.current &&
+        nextEspressoRef.current > 0
+      ) {
+        espressoAvailableRef.current = true;
+        setEspressoAvailable(true);
+        espressoAvailUntilRef.current = now + 30000;
+        nextEspressoRef.current = now + 60000 + Math.random() * 120000;
+      }
+
+      // Expire offer
+      if (espressoAvailableRef.current && now > espressoAvailUntilRef.current) {
+        espressoAvailableRef.current = false;
+        setEspressoAvailable(false);
+      }
+
+      // End burst
+      if (espressoActiveRef.current && now > espressoEndRef.current) {
+        espressoActiveRef.current = false;
+        setEspressoActive(false);
+      }
+
+      // Cancel on doze
+      if (dozingRef.current && (espressoActiveRef.current || espressoAvailableRef.current)) {
+        espressoActiveRef.current = false;
+        espressoAvailableRef.current = false;
+        setEspressoActive(false);
+        setEspressoAvailable(false);
+      }
+
       /* Banana consumption (active once breeding unlocks) */
       if (breedingUnlocked && totalMonkeys > 0) {
         bananaConsumeAccRef.current += getBananaConsumptionRate(totalMonkeys) * 0.1;
@@ -552,8 +602,9 @@ export function App() {
       const elapsedSec = (now - lastDetectionTickRef.current) / 1000;
       lastDetectionTickRef.current = now;
 
+      const burstMultiplier = espressoActiveRef.current ? 3 : 1;
       detectionAccRef.current +=
-        getDetectionsPerSecond(monkeys, caffeine, wordCounter) * elapsedSec;
+        getDetectionsPerSecond(monkeys, caffeine, wordCounter) * elapsedSec * burstMultiplier;
 
       let whole = Math.floor(detectionAccRef.current);
       detectionAccRef.current -= whole;
@@ -644,6 +695,26 @@ export function App() {
     if (gameState.resources.money >= totalCost) {
       dispatch({ type: ACTIONS.BUY_BANANAS, payload: { count: BANANA_BUY_COUNT, cost: totalCost } });
       addEvent('purchase', `Bought ${BANANA_BUY_COUNT} 🍌 for $${totalCost.toFixed(2)}`);
+    }
+  };
+
+  const handleEspresso = () => {
+    if (dozingRef.current) return;
+
+    const nowMs = Date.now();
+
+    if (espressoActiveRef.current) {
+      // Extend burst by 3s, capped at 20s total remaining from now
+      const extended = Math.min(espressoEndRef.current + 3000, nowMs + 20000);
+      espressoEndRef.current = extended;
+    } else if (espressoAvailableRef.current) {
+      // Start burst
+      espressoActiveRef.current = true;
+      espressoAvailableRef.current = false;
+      setEspressoActive(true);
+      setEspressoAvailable(false);
+      espressoEndRef.current = nowMs + 10000;
+      addEvent('info', '☕ Espresso served! 3x detection burst for 10s.');
     }
   };
 
@@ -827,6 +898,13 @@ export function App() {
               onSelect={handleDialChange}
             />
           )}
+
+          <EspressoButton
+            available={espressoAvailable}
+            active={espressoActive}
+            endTime={espressoEndRef.current}
+            onPress={handleEspresso}
+          />
         </div>
           </div>
         </>
