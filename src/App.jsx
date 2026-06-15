@@ -744,25 +744,15 @@ export function App() {
 
   const handlePrestige = () => {
     const nextCount = (gameState.prestige?.count ?? 0) + 1;
-    const tenureMonkeys = Math.min(nextCount, 5);
-    const bonusMoney = 30 + nextCount * 50;
     setCurrentAlert({
       type: 'critical',
       icon: '\u{1F4D6}',
       title: `Volume ${nextCount} Published!`,
       message: `Your anthology has been published. The academic world takes notice.`,
-      details: `Tenure granted: ${tenureMonkeys} monkey${tenureMonkeys !== 1 ? 's' : ''} kept. Starting funds: $${bonusMoney}. Anthology is permanent.`,
+      details: `Collected words submitted to print. +$500 advance from your publisher.`,
       onDismiss: () => {
         dispatch({ type: ACTIONS.PRESTIGE });
-        setBreedingUnlocked(false);
-        setGameStarted(false);
-        setEvents([]);
-        setPinnedAlert(null);
         setCurrentAlert(null);
-        setDozing(false);
-        setBananaBoat(false);
-        setEspressoAvailable(false);
-        setEspressoActive(false);
       },
     });
   };
