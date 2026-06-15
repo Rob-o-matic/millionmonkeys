@@ -66,7 +66,7 @@ describe('Economy', () => {
 });
 
 describe('Prestige reducer', () => {
-  it('should reset game state and apply tenure on PRESTIGE', () => {
+  it('should publish anthology and give $500 bonus without resetting game', () => {
     const stateWithAnthology = {
       ...INITIAL_STATE,
       anthology: {
@@ -81,9 +81,9 @@ describe('Prestige reducer', () => {
     const newState = gameReducer(stateWithAnthology, { type: ACTIONS.PRESTIGE });
 
     expect(newState.prestige.count).toBe(1);
-    expect(newState.upgrades.monkeys).toBe(1);
-    expect(newState.anthology.collected.length).toBe(1);
-    expect(newState.resources.money).toBe(80); // 30 + 1 * 50
-    expect(newState.resources.words).toBe(0);
+    expect(newState.upgrades.monkeys).toBe(5); // kept
+    expect(newState.anthology.collected.length).toBe(0); // cleared (published)
+    expect(newState.resources.money).toBe(700); // 200 + 500 bonus
+    expect(newState.resources.words).toBe(50); // kept
   });
 });

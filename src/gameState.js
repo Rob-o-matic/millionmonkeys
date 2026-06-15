@@ -252,18 +252,17 @@ export function gameReducer(state = INITIAL_STATE, action) {
 
     case ACTIONS.PRESTIGE: {
       const newCount = (state.prestige?.count ?? 0) + 1;
-      const tenureMonkeys = Math.min(newCount, 5);
       return {
-        ...INITIAL_STATE,
+        ...state,
         prestige: { count: newCount },
         anthology: {
-          ...INITIAL_STATE.anthology,
-          collected: state.anthology.collected ?? [],
-          totalWordsEver: state.anthology.totalWordsEver,
+          ...state.anthology,
+          collected: [],
         },
-        upgrades: { ...INITIAL_STATE.upgrades, monkeys: tenureMonkeys },
-        costBasis: { ...INITIAL_STATE.costBasis, monkeys: tenureMonkeys },
-        resources: { ...INITIAL_STATE.resources, money: 30 + newCount * 50 },
+        resources: {
+          ...state.resources,
+          money: state.resources.money + 500,
+        },
       };
     }
 
