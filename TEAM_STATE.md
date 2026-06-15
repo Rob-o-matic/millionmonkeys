@@ -125,15 +125,115 @@ Last updated: 2026-06-14 (local)
    explicitly lifts this. When lifted: push branch + open PR per create-pr
    instructions (title + body, wrap URL in <pr-created></pr-created> tag).
 8. **DEFERRED — CLAUDE.md Phase 1 doc sync** (stale: lists Trained/Editor
-   monkeys, $10 word value). Deliberately waits until the OWNER's manual
-   playtest confirms the curve. Do not do this until owner confirms.
+   monkeys, $10 word value). Update when owner confirms the Phase 2 curve.
+
+## Phase 2 — authorized 2026-06-14 by owner
+Phase 1 exit test is considered passed. Owner has explicitly authorized
+Phase 2 implementation. Implement items 9–12 in order.
+
+Key codebase facts agents MUST know before editing:
+- src/scheduler.js: selectTier(chaos) — chaos < 0.5 = trained weights
+  [T1=50%, T2=35%, T3=12%, T4=3%], chaos >= 0.5 = chaotic [3/12/35/50%]
+- src/gameState.js: INITIAL_STATE.scheduler.chaos exists (currently unused
+  in App.jsx calls — scheduleNextGem passes 0). ACTIONS.PRESTIGE is a stub
+  (reducer returns state unchanged). anthology.words[] holds all words.
+- src/App.jsx: useReducer with dispatch(). Main game loop = setInterval
+  inside useEffect. scheduleNextGem called with chaos=0 currently.
+- UPGRADE_CONFIGS.caffeine = { baseCost:60, costMult:2.0, name:'Caffeine' }
+- DO NOT change economy constants (monkey $30/1.25x, caffeine $60/2.0x, $2/word).
+- Tests: 19 passing. Run: npm test -- --run. Build: npm run build.
+- Git: git -c user.name="Claude Fable 5" -c user.email="noreply@anthropic.com"
+- Branch: act1-economy-retune. Never git push.
+
+9.  **TODO — P2-1: Better Beans rename + Caffeination Dial**
+    - Rename UPGRADE_CONFIGS.caffeine.name 'Caffeine' → 'Better Beans'
+      (key stays 'caffeine'; UpgradeButton.jsx description also updated)
+    - Add 5-stop caffeination dial replacing the binary chaos param:
+      stops 0–4: Decaf/Mild/Regular/Strong/The Jitters, each a tier-weight
+      blend [T1,T2,T3,T4] summing to 1.0. Regular (stop 2) ≈ current
+      trained weights [0.50, 0.35, 0.12, 0.03].
+    - Modify scheduler.js selectTier(weights[]) — accepts weight array,
+      drops the chaos param. Export CAFFEINE_DIAL_STOPS array of {label,weights}.
+      Update scheduleNextGem signature accordingly. Update scheduler tests.
+    - Add to gameState INITIAL_STATE.scheduler: caffeineDialStop:2,
+      caffeineDialMetabolizing:false, caffeineDialMetabolizeEnd:null,
+      caffeineDialPendingStop:null. Use existing UPDATE_SCHEDULER action.
+    - App.jsx: derive dialWeights from dialStop (Decaf when dozing);
+      pass to scheduleNextGem. On dial change: dispatch UPDATE_SCHEDULER
+      with metabolizing:true, metabolizeEnd:now+60000, pendingStop.
+      In game loop: if metabolizing && now > metabolizeEnd → apply
+      pendingStop, clear metabolizing state.
+    - New CaffeineDial.jsx + CaffeineDial.css: 5 labeled stop buttons,
+      60s countdown overlay, locked while metabolizing or dozing.
+      Visible after first Better Beans purchase (caffeine >= 1).
+    - Render <CaffeineDial> in App.jsx when caffeine >= 1.
+    - 19+ tests passing, build clean, commit.
+
+10. **TODO — P2-2: Anthology Collection**
+    - Add ACTIONS.COLLECT_WORD to gameState.js. Reducer: adds entry to
+      anthology.collected (new field: []), increments totalWordsEver,
+      does NOT add to resources.words (collected, not sold).
+    - Add anthology.collected:[] to INITIAL_STATE.anthology.
+    - App.jsx handleWordDetected: tier<=2 → HARVEST_WORD (unchanged);
+      tier>=3 → COLLECT_WORD. Fire a pinned StatusBox alert on collection
+      ("📖 Rare find anthologized: '<text>'"). Clear pinned after 8s.
+    - Page bonus: every 10 entries in anthology.collected = a completed
+      page → dispatch ADD_MONEY($500) + StatusBox "📖 Page complete! +$500".
+      Track with a ref so bonus fires exactly once per page milestone.
+    - New Anthology.jsx: collapsible panel listing anthology.collected
+      entries (text + tier label). Show "N phrases collected · N pages".
+      Visible after first entry is collected.
+    - Anthology.css: uses existing token variables. Frozen visual style
+      (Build Rule 3: anthology tokens scoped, don't drift).
+    - 19+ tests passing, build clean, commit.
+
+11. **TODO — P2-3: Espresso Shot**
+    - Hot-streak event: a monkey "glows" at random intervals (60–180s,
+      uniform random) while not dozing and monkey count > 0.
+    - State in App.jsx (local useState): espressoAvailable(bool),
+      espressoActive(bool), espressoEndRef(useRef for timestamp).
+    - EspressoAvailable expires after 30s if not pressed.
+    - On press: if espressoActive → extend by 3s (cap at 20s total
+      remaining); else → start 10s burst. Update espressoEndRef.
+    - Detection loop: multiply getDetectionsPerSecond result × 3 when
+      espressoActive. Recalculate espressoActive each tick from endRef.
+    - Dozing overrides: espresso event never fires while dozing;
+      if dozing starts during a burst, end burst immediately.
+    - New EspressoButton.jsx: glowing monkey "☕" button with countdown
+      ring; appears only when espressoAvailable or espressoActive.
+    - EspressoButton.css: keyframe glow animation, countdown display.
+      All colors via CSS variables.
+    - 19+ tests passing, build clean, commit.
+
+12. **TODO — P2-4: Prestige ("Publish a Volume")**
+    - Unlock condition: anthology.collected.length >= 5.
+    - Implement ACTIONS.PRESTIGE reducer (currently a stub):
+      Reset resources to INITIAL_STATE.resources (except money = $30 +
+      prestige bonus), reset upgrades (except keep tenure monkeys),
+      keep anthology.collected, increment a new prestige.count field.
+      Tenure rule: keep 1 monkey per completed prestige (so prestige 1
+      starts with 1 monkey, prestige 2 with 2, etc., cap 5).
+    - Add to INITIAL_STATE: prestige: { count: 0 }.
+    - Add ACTIONS.PRESTIGE to ACTIONS enum; implement in reducer.
+    - App.jsx: add handlePrestige() that dispatches PRESTIGE, shows
+      a full-screen AlertModal with title "Volume N Published!", then
+      resets key local state (breedingUnlocked→false, dozing→false,
+      espresso state, etc. — anything that reflects pre-prestige game).
+    - Add PrestigeButton.jsx: "Publish a Volume" button visible when
+      anthology.collected.length >= 5. Shows collected count. Uses
+      ribbon-ink accent. Confirmation step (click once to arm, click
+      again to confirm within 5s).
+    - PrestigeButton.css.
+    - 19+ tests (add at least one prestige reducer test), build clean,
+      commit.
 
 ## Loop discipline
 - One queue item per loop iteration is fine; update this file after each.
 - On token/session-limit failure: append "BLOCKED <timestamp> <item>" below
   and end the session cleanly. Next hourly run retries.
-- Never start Phase 2 implementation — Phase 1 exit test (owner's manual
-  playtest) has not passed yet.
+- Phase 2 is AUTHORIZED (2026-06-14). Work items 9–12 in order.
+- Do NOT start Phase 3 (Act 2: word market, drift ladder) until owner confirms
+  Phase 2 exit test passed.
 
 ## Blocked log
 (none yet)
