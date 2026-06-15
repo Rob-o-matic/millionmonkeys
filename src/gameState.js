@@ -12,7 +12,7 @@ export const INITIAL_STATE = {
   resources: {
     words: 0,
     money: 30,        // Enough for first monkey purchase
-    bananas: 0,       // Unlocks at breeding alert (8 monkeys); 100 gifted at unlock
+    bananas: 0,       // Unlocks at breeding alert (4 monkeys); 100 gifted at unlock
     marketingBudget: 0, // NEW: earned from text share milestones
     influence: 0,     // NEW: earned from text share milestones
     matter: 0,

@@ -245,8 +245,8 @@ export function App() {
         });
       }
 
-      // Check for breeding unlock at 8 monkeys
-      if (!breedingUnlocked && totalMonkeys >= 8) {
+      // Check for breeding unlock at 4 monkeys
+      if (!breedingUnlocked && totalMonkeys >= 4) {
         setBreedingUnlocked(true);
         // Gift 100 starter bananas so the player has time to learn the system
         dispatch({ type: ACTIONS.BUY_BANANAS, payload: { count: 100, cost: 0 } });
@@ -507,7 +507,7 @@ export function App() {
       const breedingInterval = Math.max(baseBreedingInterval / rateMultiplier, 8000); // Min 8s
 
       // Dozing monkeys don't breed
-      if (breedingUnlocked && totalMonkeys >= 8 && timeSinceLastBreeding > breedingInterval && !dozingRef.current) {
+      if (breedingUnlocked && totalMonkeys >= 4 && timeSinceLastBreeding > breedingInterval && !dozingRef.current) {
         // Each habitat level adds 1 offspring per birth (level 0=1, level 1=2, etc.)
         const offspring = 1 + habitatCount;
 
