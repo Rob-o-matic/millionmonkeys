@@ -229,8 +229,8 @@ export function App() {
         });
       }
 
-      // Check for Phase 2 transition at 10,000 monkeys
-      if (gameState.phase === 1 && totalMonkeys >= 10000) {
+      // Check for Phase 2 transition at 100 monkeys
+      if (gameState.phase === 1 && totalMonkeys >= 100) {
         dispatch({ type: ACTIONS.SET_PHASE, payload: 2 });
         addEvent('critical', '🚨 CRITICAL MASS ACHIEVED');
         addEvent('info', 'Monkey output now 0.001% of global text production');
@@ -240,7 +240,7 @@ export function App() {
           type: 'critical',
           icon: '⚠️',
           title: 'Critical Mass Achieved',
-          message: 'The monkey population has reached 10,000. Their collective output is now measurable on a global scale.',
+          message: 'The monkey population has reached 100. Their collective output is now measurable on a global scale.',
           details: 'New resource unlocked: INFLUENCE • New objective: Control the publishing industry'
         });
       }
