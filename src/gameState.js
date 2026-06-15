@@ -1,12 +1,18 @@
 /* Game state machine with Acts 2–3 dormant behind triggers */
 
+import { DOLLARS_PER_WORD } from './economy';
+
+export const TIER_WORD_MULTIPLIERS = { 1: 1, 2: 3, 3: 7.5, 4: 20 };
+
 export const INITIAL_STATE = {
   act: 1,
   phase: 1, // NEW: 1 = breeding phase, 2 = information empire
   driftProgress: 0,
+  prestige: { count: 0 },
   resources: {
     words: 0,
     money: 30,        // Enough for first monkey purchase
+    bananas: 0,       // Unlocks at breeding alert (8 monkeys); 100 gifted at unlock
     marketingBudget: 0, // NEW: earned from text share milestones
     influence: 0,     // NEW: earned from text share milestones
     matter: 0,
@@ -27,6 +33,7 @@ export const INITIAL_STATE = {
   },
   anthology: {
     words: [], // [{ text, tier, timestamp }]
+    collected: [], // [{ text, tier, discoveredAt }] — Tier 3/4 gems collected here
     totalWordsEver: 0, // For Shakespeare progress (cosmetic)
     pages: {}, // { pageKey: { required: [], collected: [] } }
   },
@@ -38,8 +45,12 @@ export const INITIAL_STATE = {
       tier3: 0,
       tier4: 0,
     },
-    chaos: 0, // 0 = trained, 1 = chaotic
+    chaos: 0, // 0 = trained, 1 = chaotic (legacy — superseded by caffeineDialStop)
     lastRetrain: 0,
+    caffeineDialStop: 2,           // 0=Decaf … 4=The Jitters; default Regular
+    caffeineDialMetabolizing: false,
+    caffeineDialMetabolizeEnd: null,
+    caffeineDialPendingStop: null,
   },
   ui: {
     shakespeareProgress: 0,
@@ -69,6 +80,9 @@ export const ACTIONS = {
   RESET_GAME: 'RESET_GAME',
   UPDATE_SCHEDULER: 'UPDATE_SCHEDULER',
   SET_DRIFT: 'SET_DRIFT',
+  BUY_BANANAS: 'BUY_BANANAS',
+  CONSUME_BANANAS: 'CONSUME_BANANAS',
+  COLLECT_WORD: 'COLLECT_WORD',
 };
 
 /* Reducer */
@@ -83,8 +97,9 @@ export function gameReducer(state = INITIAL_STATE, action) {
         },
       };
 
-    case ACTIONS.HARVEST_WORD:
+    case ACTIONS.HARVEST_WORD: {
       const wordCount = action.payload.count || 1;
+      const tierMult = TIER_WORD_MULTIPLIERS[action.payload.tier || 1] || 1;
       return {
         ...state,
         anthology: {
@@ -101,14 +116,15 @@ export function gameReducer(state = INITIAL_STATE, action) {
         },
         resources: {
           ...state.resources,
-          words: state.resources.words + wordCount,
+          words: state.resources.words + wordCount * tierMult,
         },
       };
+    }
 
     case ACTIONS.SELL_WORDS:
       // Convert all words to money at fixed rate
       const wordsSold = state.resources.words;
-      const moneyEarned = wordsSold * 10; // $10 per word
+      const moneyEarned = wordsSold * DOLLARS_PER_WORD;
       return {
         ...state,
         resources: {
@@ -234,9 +250,57 @@ export function gameReducer(state = INITIAL_STATE, action) {
         driftProgress: action.payload,
       };
 
-    case ACTIONS.PRESTIGE:
-      // Prestige is unlocked in Phase 2
-      return state;
+    case ACTIONS.PRESTIGE: {
+      const newCount = (state.prestige?.count ?? 0) + 1;
+      const tenureMonkeys = Math.min(newCount, 5);
+      return {
+        ...INITIAL_STATE,
+        prestige: { count: newCount },
+        anthology: {
+          ...INITIAL_STATE.anthology,
+          collected: state.anthology.collected ?? [],
+          totalWordsEver: state.anthology.totalWordsEver,
+        },
+        upgrades: { ...INITIAL_STATE.upgrades, monkeys: tenureMonkeys },
+        costBasis: { ...INITIAL_STATE.costBasis, monkeys: tenureMonkeys },
+        resources: { ...INITIAL_STATE.resources, money: 30 + newCount * 50 },
+      };
+    }
+
+    case ACTIONS.BUY_BANANAS:
+      return {
+        ...state,
+        resources: {
+          ...state.resources,
+          bananas: state.resources.bananas + action.payload.count,
+          money: state.resources.money - action.payload.cost,
+        },
+      };
+
+    case ACTIONS.CONSUME_BANANAS:
+      return {
+        ...state,
+        resources: {
+          ...state.resources,
+          bananas: Math.max(0, state.resources.bananas - action.payload),
+        },
+      };
+
+    case ACTIONS.COLLECT_WORD: {
+      const { text, tier, discoveredAt } = action.payload;
+      return {
+        ...state,
+        anthology: {
+          ...state.anthology,
+          collected: [
+            ...state.anthology.collected,
+            { text, tier, discoveredAt },
+          ],
+          totalWordsEver: state.anthology.totalWordsEver + 1,
+        },
+        // Do NOT touch resources.words — collected gems bypass the sell cycle
+      };
+    }
 
     case ACTIONS.RESET_GAME:
       return INITIAL_STATE;

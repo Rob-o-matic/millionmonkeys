@@ -7,7 +7,10 @@ import {
   isPityActive,
   getGraceWindow,
   getBaseInterval,
-} from './scheduler';
+  scaleByMonkeys,
+  MAX_GEM_INTERVAL_MS,
+  CAFFEINE_DIAL_STOPS,
+} from '../scheduler';
 
 describe('Scheduler', () => {
   let scheduler;
@@ -23,7 +26,7 @@ describe('Scheduler', () => {
 
   it('should schedule next gem with delay in base interval range', () => {
     const currentTime = 0;
-    const result = scheduleNextGem(scheduler, currentTime, 1, 0, false);
+    const result = scheduleNextGem(scheduler, currentTime, 1, CAFFEINE_DIAL_STOPS[2].weights, false);
 
     expect(result.tier).toBeGreaterThanOrEqual(1);
     expect(result.tier).toBeLessThanOrEqual(4);
@@ -32,13 +35,12 @@ describe('Scheduler', () => {
   });
 
   it('should scale intervals by monkey count', () => {
-    const baseInterval = getBaseInterval(1);
-    const result1 = scheduleNextGem(scheduler, 0, 1, 0, true);
-    const result2 = scheduleNextGem(scheduler, 0, 5, 0, true);
+    const baseInterval = getBaseInterval(2);
 
-    // With 5 monkeys, interval should be shorter but not less than 50%
-    expect(result2.delay).toBeLessThan(result1.delay);
-    expect(result2.delay).toBeGreaterThanOrEqual(baseInterval * 0.5);
+    // More monkeys = shorter interval, clamped at the 50% floor
+    expect(scaleByMonkeys(baseInterval, 1)).toBe(baseInterval);
+    expect(scaleByMonkeys(baseInterval, 2)).toBe(baseInterval / 2);
+    expect(scaleByMonkeys(baseInterval, 100)).toBe(baseInterval * 0.5);
   });
 
   it('should provide grace window per tier', () => {
@@ -49,27 +51,38 @@ describe('Scheduler', () => {
     expect(getGraceWindow(5)).toBe(Infinity);
   });
 
-  it('should select tiers by chaos setting', () => {
-    // Trained: should favor lower tiers
-    const trainedTiers = [];
+  it('should select tiers by dial stop setting', () => {
+    // Decaf: should favor lower tiers
+    const decafTiers = [];
     for (let i = 0; i < 100; i++) {
-      const result = scheduleNextGem(scheduler, i * 1000, 1, 0, false);
-      trainedTiers.push(result.tier);
+      const result = scheduleNextGem(scheduler, i * 1000, 1, CAFFEINE_DIAL_STOPS[0].weights, false);
+      decafTiers.push(result.tier);
     }
-    const trainedAvg =
-      trainedTiers.reduce((a, b) => a + b) / trainedTiers.length;
+    const decafAvg =
+      decafTiers.reduce((a, b) => a + b) / decafTiers.length;
 
-    // Chaotic: should favor higher tiers
+    // The Jitters: should favor higher tiers
     scheduler = createScheduler();
-    const chaoticTiers = [];
+    const jittersTiers = [];
     for (let i = 0; i < 100; i++) {
-      const result = scheduleNextGem(scheduler, i * 1000, 1, 1, false);
-      chaoticTiers.push(result.tier);
+      const result = scheduleNextGem(scheduler, i * 1000, 1, CAFFEINE_DIAL_STOPS[4].weights, false);
+      jittersTiers.push(result.tier);
     }
-    const chaoticAvg =
-      chaoticTiers.reduce((a, b) => a + b) / chaoticTiers.length;
+    const jittersAvg =
+      jittersTiers.reduce((a, b) => a + b) / jittersTiers.length;
 
-    expect(chaoticAvg).toBeGreaterThan(trainedAvg);
+    expect(jittersAvg).toBeGreaterThan(decafAvg);
+  });
+
+  it('should never schedule a non-scripted gap above MAX_GEM_INTERVAL_MS', () => {
+    /* Tier-3/4 awards must not silence the feed for their own 60s-20min
+       base interval: rarity comes from selectTier weights, the GAP is
+       capped at the Act 1 cadence ceiling (45s) */
+    expect(MAX_GEM_INTERVAL_MS).toBe(45000);
+    for (let i = 0; i < 500; i++) {
+      const result = scheduleNextGem(scheduler, i * 1000, 1, CAFFEINE_DIAL_STOPS[4].weights, false); // The Jitters: mostly tier 3/4
+      expect(result.delay).toBeLessThanOrEqual(MAX_GEM_INTERVAL_MS);
+    }
   });
 
   it('should trigger pity after pity window elapses', () => {

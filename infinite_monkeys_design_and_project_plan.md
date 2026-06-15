@@ -45,15 +45,16 @@ The character stream is cosmetic. Rewards come from an authored scheduler:
 
 Intervals scale down with monkey count (more monkeys = faster schedule), but never below 50% of base. The player must always be able to perceive individual events. A reward you can't notice is a reward you didn't get.
 
-**Finding 2.2: The chaos slider needs two real loot tables.**
-- Trained (low chaos): Tier 1–3 intervals shortened 30%. Tier 4 lengthened 50%.
-- Chaotic (high chaos): reverse. Plus exclusive anomaly types (almost-words, corrupted quotes) only roll at high chaos.
-One slider, two builds, both viable. Switching is free but takes 60s to "retrain" — prevents toggle-cheesing the scheduler.
+**Finding 2.2: The chaos slider is the caffeination dial, and it needs two real loot tables.**
+One control, skinned as coffee strength: 5 stops, Decaf → The Jitters.
+- Decaf/Trained (low chaos): Tier 1–3 intervals shortened 30%. Tier 4 lengthened 50%.
+- Jitters/Chaotic (high chaos): reverse. Plus exclusive anomaly types (almost-words, corrupted quotes) that only roll at high chaos. Middle stops interpolate.
+One dial, two builds, both viable. Moving the dial is free but takes 60s to "metabolize" — prevents toggle-cheesing the scheduler. Unlocks on first Better Beans purchase (the $60 Caffeine rung, renamed; economics unchanged); never a consumable; banana doze overrides the dial. Distinct from the Espresso Shot (Finding 2.4): the dial is posture (*which* table you roll), the shot is a moment (*how fast* you roll it). The dial persists into Act 2 unchanged — the word-market price stepper is Act 2's only new control surface.
 
 **Finding 2.3: Prestige (added to Act 1, was missing).**
 "Publish a Volume": reset monkeys and upgrades, keep the Anthology forever, gain Tenure (permanent +10% all output per volume, mild exponential). First prestige is offered around minute 45 when growth visibly flattens. Prestige is also the narrative on-ramp to Act 2 — publishing is what attracts the money.
 
-**Finding 2.4: Active vs idle balance.** Active play earns 2.5x idle rate via manual taps on Tier 2+ and 20-second "hot streak" events (a monkey glows; tapping extends a 3x output burst). Never more than 3x, or idle players feel robbed.
+**Finding 2.4: Active vs idle balance.** Active play earns 2.5x idle rate via manual taps on Tier 2+ and "hot streak" events, skinned as the **Espresso Shot**: a monkey glows ("needs a pick-me-up"), pressing serves espresso for a 10–12s 3x output burst, rapid taps extend to a ~20s cap. Never more than 3x total, or idle players feel robbed. A dozing monkey (out of bananas) cannot be espresso'd.
 
 ### Lens 3 — UX & Game Feel
 

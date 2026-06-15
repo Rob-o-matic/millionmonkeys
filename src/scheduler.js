@@ -8,33 +8,39 @@ const GEM_TIERS = {
   5: { baseMin: Infinity, baseMax: Infinity, pity: Infinity, name: 'Shakespeare' },
 };
 
+/* Act 1 cadence ceiling: rarity comes from selectTier's weights, but the
+   GAP to the next gem never exceeds 45s (the documented tier-2 "every
+   20-40s" cadence). Without this, awarding a tier-3/4 gem silenced ALL
+   visible discoveries for that tier's own 60s-20min interval. */
+export const MAX_GEM_INTERVAL_MS = 45000;
+
 /* Scale interval based on monkey count (50% floor) */
-function scaleByMonkeys(interval, monkeyCount) {
+export function scaleByMonkeys(interval, monkeyCount) {
   const scaled = interval / monkeyCount;
   const floor = interval * 0.5;
   return Math.max(scaled, floor);
 }
 
-/* Get next gem tier (probability-weighted after scripting) */
-function selectTier(chaos = 0) {
-  // chaos: 0 = trained, 1 = chaotic
-  // Trained: Tier 1–3 fast, Tier 4 slow
-  // Chaotic: reverse
-  if (chaos < 0.5) {
-    // Trained: 50% T1, 35% T2, 12% T3, 3% T4
-    const roll = Math.random();
-    if (roll < 0.5) return 1;
-    if (roll < 0.85) return 2;
-    if (roll < 0.97) return 3;
-    return 4;
-  } else {
-    // Chaotic: 3% T1, 12% T2, 35% T3, 50% T4
-    const roll = Math.random();
-    if (roll < 0.03) return 1;
-    if (roll < 0.15) return 2;
-    if (roll < 0.5) return 3;
-    return 4;
+/* 5-stop caffeination dial — each stop blends gem-tier probabilities.
+   Decaf = safe common words; The Jitters = risky rare anomalies. */
+export const CAFFEINE_DIAL_STOPS = [
+  { label: 'Decaf',       weights: [0.83, 0.15, 0.02, 0.00] },
+  { label: 'Mild',        weights: [0.68, 0.23, 0.08, 0.01] },
+  { label: 'Regular',     weights: [0.50, 0.35, 0.12, 0.03] },
+  { label: 'Strong',      weights: [0.40, 0.28, 0.23, 0.09] },
+  { label: 'The Jitters', weights: [0.25, 0.26, 0.32, 0.17] },
+];
+
+/* Get next gem tier using a weight array [tier1, tier2, tier3, tier4] */
+function selectTier(weights) {
+  const roll = Math.random();
+  let cumulative = 0;
+  for (let i = 0; i < weights.length; i++) {
+    cumulative += weights[i];
+    if (roll < cumulative) return i + 1;
   }
+  // Fallback to last tier if floating-point rounding leaves a gap
+  return weights.length;
 }
 
 /* Create a scheduler instance */
@@ -51,10 +57,10 @@ export function scheduleNextGem(
   scheduler,
   currentTime,
   monkeyCount = 1,
-  chaos = 0,
+  tierWeights = CAFFEINE_DIAL_STOPS[2].weights,
   isScripted = false
 ) {
-  let tier = selectTier(chaos);
+  let tier = selectTier(tierWeights);
 
   // Check pity timers
   Object.keys(GEM_TIERS).forEach((t) => {
@@ -78,6 +84,8 @@ export function scheduleNextGem(
           Math.random() * (tierConfig.baseMax - tierConfig.baseMin),
         monkeyCount
       );
+    // Cap the gap: rare tiers stay rare by weight, not by drought
+    interval = Math.min(interval, MAX_GEM_INTERVAL_MS);
   } else {
     interval = tierConfig.baseMin; // Use base for scripted
   }

@@ -1,0 +1,60 @@
+.caffeine-dial {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs, 4px);
+  padding: var(--space-sm, 8px) 0;
+}
+
+.caffeine-dial__label {
+  font-size: 0.72rem;
+  color: var(--secondary-text);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.caffeine-dial__status {
+  font-size: 0.78rem;
+  color: var(--brass-ink);
+  min-height: 1.1em;
+}
+
+.caffeine-dial__stops {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-xs, 4px);
+  flex-wrap: wrap;
+  min-height: 48px;
+  align-items: center;
+}
+
+.caffeine-dial__stop {
+  flex: 1 1 auto;
+  min-height: 48px;
+  padding: 0 var(--space-xs, 4px);
+  background: transparent;
+  border: 1px solid var(--platen);
+  border-radius: 4px;
+  color: var(--secondary-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, font-weight 0.15s;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.caffeine-dial__stop:hover:not(:disabled) {
+  border-color: var(--brass-ink);
+  color: var(--ink);
+}
+
+.caffeine-dial__stop--active {
+  border-color: var(--brass-ink);
+  background: color-mix(in srgb, var(--brass-ink) 12%, transparent);
+  color: var(--brass-ink);
+  font-weight: bold;
+}
+
+.caffeine-dial__stop:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -5,11 +5,22 @@ const ACT_1_TOKENS = {
   paper: '#F6F1E5',
   ink: '#211D1A',
   ribbonRed: '#A8362B',
-  brass: '#B08D3E',
+  brass: '#A28439', // darkened (was #B08D3E): >=3.0 on paper (borders) and >=4.5 vs ink (hover text)
   platen: '#4A4440',
   borderRadius: 0,
   headerFont: 'monospace',
   feedFont: '"Special Elite", "Courier Prime", monospace',
+};
+
+/* Derived Act 1 text inks (verified by sim/contrast_audit.mjs at drift 0).
+   Static across Phase 1 (drift pinned at 0 per Build Rule 2); Phase 3 must
+   add Act 2/3 counterparts before drift advances. */
+const ACT_1_DERIVED_INKS = {
+  brassInk: '#665020',
+  harvestInk: '#1d5c38',
+  statusBreeding: '#11505f',
+  ribbonInk: '#8E2E25',
+  harvestGreen: '#3E9B5F',
 };
 
 const ACT_2_TOKENS = {
@@ -132,6 +143,11 @@ export function applyTokens(driftProgress = 0) {
   root.style.setProperty('--ribbon-red', ribbonRed);
   root.style.setProperty('--brass', brass);
   root.style.setProperty('--platen', platen);
+  root.style.setProperty('--brass-ink', ACT_1_DERIVED_INKS.brassInk);
+  root.style.setProperty('--harvest-ink', ACT_1_DERIVED_INKS.harvestInk);
+  root.style.setProperty('--status-breeding', ACT_1_DERIVED_INKS.statusBreeding);
+  root.style.setProperty('--ribbon-ink', ACT_1_DERIVED_INKS.ribbonInk);
+  root.style.setProperty('--harvest-green', ACT_1_DERIVED_INKS.harvestGreen);
   root.style.setProperty('--button-border-radius', `${borderRadius}px`);
   root.style.setProperty('--header-font', headerFont);
   root.style.setProperty('--feed-font', feedFont);
@@ -146,8 +162,13 @@ export function freezeAnthologyTokens() {
   style.setProperty('--bg', '#F6F1E5', 'important');
   style.setProperty('--text', '#211D1A', 'important');
   style.setProperty('--ribbon-red', '#A8362B', 'important');
-  style.setProperty('--brass', '#B08D3E', 'important');
+  style.setProperty('--brass', '#A28439', 'important');
   style.setProperty('--platen', '#4A4440', 'important');
+  style.setProperty('--brass-ink', '#665020', 'important');
+  style.setProperty('--harvest-ink', '#1d5c38', 'important');
+  style.setProperty('--status-breeding', '#11505f', 'important');
+  style.setProperty('--ribbon-ink', '#8E2E25', 'important');
+  style.setProperty('--harvest-green', '#3E9B5F', 'important');
   style.setProperty('--button-border-radius', '0px', 'important');
   style.setProperty('--header-font', 'monospace', 'important');
   style.setProperty(

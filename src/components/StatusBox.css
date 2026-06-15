@@ -10,7 +10,7 @@
   font-size: 12px;
   line-height: 1.4;
   color: var(--secondary-text);
-  max-height: 100px;
+  max-height: 168px;
   overflow-y: auto;
 }
 
@@ -48,17 +48,25 @@
 }
 
 .status-purchase {
-  color: var(--brass);
+  color: var(--brass-ink); /* brass was 2.36:1 on the status bg; ink variant is 4.84:1 */
 }
 
 .status-discovery {
-  color: var(--ribbon-red);
+  color: var(--ribbon-ink); /* ribbon-red was 4.10:1 at 12px; ink variant is 5.15:1 */
 }
 
 .status-breeding {
-  color: #7dd3fc;
+  color: var(--status-breeding); /* #7dd3fc was 1.05:1 — invisible at the breeding beat */
 }
 
 .status-info {
   color: var(--secondary-text);
+}
+
+.status-pinned {
+  color: var(--ribbon-ink);
+  font-weight: bold;
+  border-bottom: 1px solid var(--platen);
+  padding-bottom: var(--space-xs);
+  margin-bottom: var(--space-xs);
 }

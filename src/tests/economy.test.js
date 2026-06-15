@@ -7,69 +7,83 @@ import {
   canAfford,
   getTotalMonkeys,
   getProductionMultiplier,
-  getAutoSaleRate,
+  DOLLARS_PER_WORD,
 } from '../economy';
+import { gameReducer, INITIAL_STATE, ACTIONS } from '../gameState';
 
 describe('Economy', () => {
-  it('should calculate cost with 1.15x multiplier', () => {
-    const cost0 = getCost('monkeys', 0);
-    const cost1 = getCost('monkeys', 1);
-    const cost2 = getCost('monkeys', 2);
+  it('should sell words at $2 per word', () => {
+    expect(DOLLARS_PER_WORD).toBe(2);
+  });
 
-    expect(cost0).toBe(100);
-    expect(cost1).toBeCloseTo(115, 0);
-    expect(cost2).toBeCloseTo(132, 0);
+  it('should calculate monkey cost with 1.25x per-track multiplier', () => {
+    expect(getCost('monkeys', 0)).toBe(30);
+    expect(getCost('monkeys', 1)).toBe(38);
+    expect(getCost('monkeys', 2)).toBe(47);
+    expect(getCost('monkeys', 9)).toBe(224);
+  });
+
+  it('should calculate caffeine cost with 2.0x per-track multiplier', () => {
+    expect(getCost('caffeine', 0)).toBe(60);
+    expect(getCost('caffeine', 1)).toBe(120);
+    expect(getCost('caffeine', 2)).toBe(240);
+  });
+
+  it('should calculate habitat and sales monkey costs with 1.15x multiplier', () => {
+    expect(getCost('habitat', 0)).toBe(500);
+    expect(getCost('habitat', 1)).toBe(575);
+    expect(getCost('salesMonkey', 0)).toBe(2000);
+    expect(getCost('salesMonkey', 1)).toBe(2300);
+  });
+
+  it('should return Infinity for unknown upgrade tracks', () => {
+    expect(getCost('trainedMonkeys', 0)).toBe(Infinity);
+    expect(getNextCost('editorMonkeys', 0)).toBe(Infinity);
   });
 
   it('should check affordability with money', () => {
-    expect(canAfford(100, 'monkeys', 0)).toBe(true);
-    expect(canAfford(99, 'monkeys', 0)).toBe(false);
-    expect(canAfford(500, 'trainedMonkeys', 0)).toBe(true);
+    expect(canAfford(30, 'monkeys', 0)).toBe(true);
+    expect(canAfford(29, 'monkeys', 0)).toBe(false);
+    expect(canAfford(38, 'monkeys', 1)).toBe(true);
+    expect(canAfford(37, 'monkeys', 1)).toBe(false);
   });
 
   it('should calculate total monkeys from upgrades', () => {
     const upgrades = {
       monkeys: 3,
-      trainedMonkeys: 2,
-      editorMonkeys: 1,
       caffeine: 5,
       salesMonkey: 1,
     };
     const total = getTotalMonkeys(upgrades);
-    expect(total).toBe(3 + 2 + 1); // caffeine and salesMonkey don't count
+    expect(total).toBe(3); // caffeine and salesMonkey don't count
   });
 
-  it('should apply production multipliers', () => {
-    const upgrades = {
-      monkeys: 1,
-      trainedMonkeys: 1,
-      editorMonkeys: 1,
-      caffeine: 1,
-      salesMonkey: 0,
+  it('should apply 1.1x caffeine production multiplier per purchase', () => {
+    expect(getProductionMultiplier({ monkeys: 1, caffeine: 0 })).toBe(1);
+    expect(getProductionMultiplier({ monkeys: 1, caffeine: 1 })).toBeCloseTo(1.1, 5);
+    expect(getProductionMultiplier({ monkeys: 1, caffeine: 3 })).toBeCloseTo(1.331, 3);
+  });
+});
+
+describe('Prestige reducer', () => {
+  it('should reset game state and apply tenure on PRESTIGE', () => {
+    const stateWithAnthology = {
+      ...INITIAL_STATE,
+      anthology: {
+        ...INITIAL_STATE.anthology,
+        collected: [{ text: 'such sweet sorrow', tier: 3, discoveredAt: 1000 }],
+        totalWordsEver: 10,
+      },
+      resources: { ...INITIAL_STATE.resources, words: 50, money: 200 },
+      upgrades: { ...INITIAL_STATE.upgrades, monkeys: 5 },
     };
-    const mult = getProductionMultiplier(upgrades);
 
-    // 1.5 (trained) * 2 (editor) * 1.1 (caffeine) = 3.3
-    expect(mult).toBeCloseTo(1.5 * 2 * 1.1, 1);
-  });
+    const newState = gameReducer(stateWithAnthology, { type: ACTIONS.PRESTIGE });
 
-  it('should calculate auto-sale rate from sales monkeys', () => {
-    const upgrades = { salesMonkey: 0 };
-    expect(getAutoSaleRate(upgrades)).toBe(0);
-
-    const upgrades2 = { salesMonkey: 3 };
-    expect(getAutoSaleRate(upgrades2)).toBe(0.3); // 0.1 per sales monkey
-  });
-
-  it('should scale costs across different upgrade types', () => {
-    const monkeyCost = getCost('monkeys', 0);
-    const trainedCost = getCost('trainedMonkeys', 0);
-    const editorCost = getCost('editorMonkeys', 0);
-    const salesCost = getCost('salesMonkey', 0);
-
-    expect(monkeyCost).toBe(30);
-    expect(trainedCost).toBe(150);
-    expect(editorCost).toBe(600);
-    expect(salesCost).toBe(2000);
+    expect(newState.prestige.count).toBe(1);
+    expect(newState.upgrades.monkeys).toBe(1);
+    expect(newState.anthology.collected.length).toBe(1);
+    expect(newState.resources.money).toBe(80); // 30 + 1 * 50
+    expect(newState.resources.words).toBe(0);
   });
 });

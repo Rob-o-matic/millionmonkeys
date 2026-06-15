@@ -1,0 +1,79 @@
+/* Anthology panel — frozen act-1 aesthetic (Build Rule 3).
+   Colors use only the scoped CSS variables defined in .anthology in tokens.css.
+   This file must never reference hex values directly. */
+
+.anthology {
+  border: 1px solid var(--platen);
+  margin-top: var(--space-sm);
+}
+
+.anthology-header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--platen);
+  color: var(--ink);
+  font-family: "Courier Prime", monospace;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  min-height: 36px;
+  min-width: 0;
+  text-align: left;
+}
+
+.anthology-header:focus {
+  outline: 2px solid var(--ribbon-ink);
+  outline-offset: 2px;
+}
+
+.anthology-header-toggle {
+  color: var(--secondary-text);
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-left: var(--space-sm);
+}
+
+.anthology-list {
+  padding: var(--space-xs) var(--space-sm);
+  max-height: 160px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+}
+
+.anthology-entry {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--space-xs);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--ink);
+  padding: 2px 0;
+  border-bottom: 1px solid transparent;
+}
+
+.anthology-entry-text {
+  flex: 1;
+  color: var(--ink);
+}
+
+.anthology-entry-text--tier4 {
+  color: var(--brass-ink);
+}
+
+.anthology-entry-label {
+  font-size: 10px;
+  font-style: normal;
+  color: var(--secondary-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}

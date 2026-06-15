@@ -89,25 +89,45 @@
 
 /* Harvested words: green highlight */
 .char.harvested {
-  background: rgba(62, 155, 95, 0.25);
-  color: #2d8659;
+  background: var(--harvest-tint);
+  color: var(--harvest-ink); /* was #2d8659: 3.11:1 on the tint; ink variant is 5.49:1 */
   font-weight: 600;
   animation: harvestGlow 400ms ease-out;
 }
 
 @keyframes harvestGlow {
   0% {
-    background: rgba(62, 155, 95, 0.1);
-    text-shadow: 0 0 3px #3e9b5f;
+    background: color-mix(in srgb, var(--harvest-green) 10%, transparent);
+    text-shadow: 0 0 3px var(--harvest-green);
   }
   50% {
-    background: rgba(62, 155, 95, 0.3);
-    text-shadow: 0 0 6px #3e9b5f;
+    background: color-mix(in srgb, var(--harvest-green) 30%, transparent);
+    text-shadow: 0 0 6px var(--harvest-green);
   }
   100% {
-    background: rgba(62, 155, 95, 0.25);
+    background: var(--harvest-tint);
     text-shadow: none;
   }
+}
+
+/* Tier 2 gems: gold, larger - the big finds */
+.char.harvested.tier2 {
+  background: color-mix(in srgb, var(--brass) 25%, transparent);
+  color: var(--brass-ink); /* brass-on-brass-tint was <2.8 at 16px/700 (not WCAG large text) */
+  font-size: 1.15em;
+  font-weight: 700;
+}
+
+/* Near-miss: amber background, final wrong character in red */
+.char.near-miss {
+  background: color-mix(in srgb, var(--brass) 30%, transparent);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.char.near-miss .near-miss-final {
+  color: var(--ribbon-red);
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -117,7 +137,7 @@
 
   .char.harvested {
     animation: none;
-    background: rgba(62, 155, 95, 0.2);
+    background: color-mix(in srgb, var(--harvest-green) 20%, transparent);
   }
 }
 
