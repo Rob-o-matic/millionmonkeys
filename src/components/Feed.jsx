@@ -46,7 +46,7 @@ export function Feed({
 
   /* Load dictionary on mount */
   useEffect(() => {
-    fetch('/words.txt')
+    fetch(`${import.meta.env.BASE_URL}words.txt`)
       .then(res => res.text())
       .then(text => {
         const words = text.split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
