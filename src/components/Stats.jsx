@@ -3,13 +3,6 @@ import { tickNumber } from '../tickAnimation';
 import { getBananaTimeRemaining } from '../economy';
 import './Stats.css';
 
-function formatBananaTime(seconds) {
-  if (seconds === Infinity) return '∞';
-  if (seconds <= 0) return '0s';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
 
 export function Stats({ gameState, bananasVisible = false }) {
   const [displayWords, setDisplayWords] = useState(gameState.resources.words);
@@ -66,11 +59,9 @@ export function Stats({ gameState, bananasVisible = false }) {
         <div className={`stat${bananaWarning ? ' banana-warning' : ''}`}>
           <label>BANANAS</label>
           <span className="stat-value">{bananas} 🍌</span>
-          <span className="banana-time">
-            {bananas === 0
-              ? 'troop is dozing!'
-              : `feeds troop ${formatBananaTime(bananaSeconds)}`}
-          </span>
+          {bananas === 0 && (
+            <span className="banana-time">troop is dozing!</span>
+          )}
         </div>
       )}
 

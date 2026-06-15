@@ -13,7 +13,7 @@ const DOLLARS_PER_WORD = 2; // $2 per word when sold
 export const BANANA_PRICE_BASE = 0.10;
 export const BANANA_PRICE_MIN  = 0.05;
 export const BANANA_PRICE_MAX  = 0.18;
-export const BANANA_BUY_COUNT  = 100;
+export const BANANA_BUY_COUNT  = 20;
 
 /* Calculate cost for the Nth purchase in a track (0-indexed) */
 export function getCost(upgradeKey, purchaseCount) {

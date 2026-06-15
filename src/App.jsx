@@ -693,7 +693,7 @@ export function App() {
                 title={`Buy ${BANANA_BUY_COUNT} bananas — $${totalCost.toFixed(2)}`}
               >
                 {bananaBoat && <span className="banana-boat-tag">🚢 50% OFF</span>}
-                <span className="banana-label">Buy 100 🍌</span>
+                <span className="banana-label">Buy {BANANA_BUY_COUNT} 🍌</span>
                 <span className="banana-price">${totalCost.toFixed(2)}</span>
               </button>
             );
