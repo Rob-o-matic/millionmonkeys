@@ -6,7 +6,7 @@
 > If a step fails with "session limit" / token exhaustion, mark it BLOCKED
 > with a timestamp and stop — the hourly loop will retry it.
 
-Last updated: 2026-06-14 (local) — P2-3 done (commit 7517839)
+Last updated: 2026-06-14 (local) — P2-4 done (commit 69bf6d7)
 
 ## Current branch / repo state
 - Repo: C:/Users/Owner/Documents/MillionMonkeys2 (github.com/Rob-o-matic/millionmonkeys)
@@ -201,27 +201,20 @@ Key codebase facts agents MUST know before editing:
       All colors via CSS variables (--brass-ink). 48px min-height.
     - 19/19 tests passing, build clean.
 
-12. **TODO — P2-4: Prestige ("Publish a Volume")**
-    - Unlock condition: anthology.collected.length >= 5.
-    - Implement ACTIONS.PRESTIGE reducer (currently a stub):
-      Reset resources to INITIAL_STATE.resources (except money = $30 +
-      prestige bonus), reset upgrades (except keep tenure monkeys),
-      keep anthology.collected, increment a new prestige.count field.
-      Tenure rule: keep 1 monkey per completed prestige (so prestige 1
-      starts with 1 monkey, prestige 2 with 2, etc., cap 5).
-    - Add to INITIAL_STATE: prestige: { count: 0 }.
-    - Add ACTIONS.PRESTIGE to ACTIONS enum; implement in reducer.
-    - App.jsx: add handlePrestige() that dispatches PRESTIGE, shows
-      a full-screen AlertModal with title "Volume N Published!", then
-      resets key local state (breedingUnlocked→false, dozing→false,
-      espresso state, etc. — anything that reflects pre-prestige game).
-    - Add PrestigeButton.jsx: "Publish a Volume" button visible when
-      anthology.collected.length >= 5. Shows collected count. Uses
-      ribbon-ink accent. Confirmation step (click once to arm, click
-      again to confirm within 5s).
-    - PrestigeButton.css.
-    - 19+ tests (add at least one prestige reducer test), build clean,
-      commit.
+12. **DONE 2026-06-14 — P2-4: Prestige ("Publish a Volume") (commit 69bf6d7)**
+    - INITIAL_STATE.prestige: { count: 0 } added to gameState.js.
+    - ACTIONS.PRESTIGE reducer implemented: newCount = prev+1,
+      tenureMonkeys = min(newCount,5), spreads INITIAL_STATE with
+      prestige/anthology/upgrades/costBasis/resources overrides.
+    - New PrestigeButton.jsx + PrestigeButton.css: two-click confirmation
+      (5s arm window), full-width, ribbon-ink accent, warning text when
+      armed, 48px min-height. Visible in App.jsx when collected >= 5.
+    - handlePrestige() in App.jsx: shows critical AlertModal "Volume N
+      Published!" with tenure/bonus details; onDismiss dispatches
+      PRESTIGE then resets all local state (breedingUnlocked, gameStarted,
+      events, pinnedAlert, dozing, bananaBoat, espresso).
+    - Prestige reducer test added to economy.test.js; 20/20 passing,
+      build clean.
 
 ## Loop discipline
 - One queue item per loop iteration is fine; update this file after each.
