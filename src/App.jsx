@@ -7,6 +7,7 @@ import { Stats } from './components/Stats';
 import { UpgradeButton } from './components/UpgradeButton';
 import { EngineIndicator } from './components/EngineIndicator';
 import { StatusBox } from './components/StatusBox';
+import { Anthology } from './components/Anthology';
 import { SectorChart } from './components/SectorChart';
 import { AlertModal } from './components/AlertModal';
 import { CaffeineDial } from './components/CaffeineDial';
@@ -56,6 +57,7 @@ export function App() {
   const lastBreedReportRef = useRef(Date.now());
   const comboCountRef = useRef(0);
   const recentHarvestsRef = useRef(new Map());
+  const anthologyPageRef = useRef(0);
   const dictionaryRef = useRef([]);
   /* Fixed-timestep detection accumulator (issue C): income is computed here
      on wall-clock time, never inside Feed's render-coupled generator tick */
@@ -69,6 +71,10 @@ export function App() {
     caffeine: gameState.upgrades.caffeine,
     wordCounter: gameState.upgrades.wordCounter || 0,
   };
+
+  /* Live anthology length for page-bonus checks in stable callbacks */
+  const liveAnthologyLengthRef = useRef(0);
+  liveAnthologyLengthRef.current = gameState.anthology.collected?.length ?? 0;
 
   /* Load dictionary on mount */
   useEffect(() => {
@@ -298,6 +304,23 @@ export function App() {
           if (scriptedGem.isNearMiss) {
             playNearMissSound();
             addEvent('info', `SO CLOSE: "${scriptedGem.text}"`);
+          } else if (scriptedGem.tier >= 3) {
+            const discoveredAt = Date.now();
+            dispatch({
+              type: ACTIONS.COLLECT_WORD,
+              payload: { text: scriptedGem.text, tier: scriptedGem.tier, discoveredAt },
+            });
+            // Page bonus: every 10 entries in anthology.collected
+            const newLength = (gameState.anthology.collected?.length ?? 0) + 1;
+            const newPages = Math.floor(newLength / 10);
+            if (newPages > anthologyPageRef.current) {
+              anthologyPageRef.current = newPages;
+              dispatch({ type: ACTIONS.ADD_MONEY, payload: 500 });
+              addEvent('info', `\u{1F4D6} Page ${newPages} complete! +$500`);
+            }
+            setPinnedAlert({ message: `\u{1F4D6} Rare find anthologised: "${scriptedGem.text}"`, type: 'info' });
+            setTimeout(() => setPinnedAlert(null), 8000);
+            addEvent('info', `\u{1F4D6} Rare find collected into anthology: "${scriptedGem.text}"`);
           } else {
             dispatch({
               type: ACTIONS.HARVEST_WORD,
@@ -344,18 +367,35 @@ export function App() {
               isNearMiss: false,
               id: `sched-${Math.round(scriptTime)}`,
             });
-            dispatch({
-              type: ACTIONS.HARVEST_WORD,
-              payload: { text, tier, count: 1 },
-            });
-            const phraseWordCount = text.trim().split(/\s+/).length;
-            if (phraseWordCount > 1) setComboCount(phraseWordCount);
-            addEvent(
-              'discovery',
-              tier >= 3
-                ? `RARE FIND: "${text}"${phraseWordCount > 1 ? ` — ${phraseWordCount}x COMBO!` : ''}`
-                : `Discovered "${text}"`
-            );
+            if (tier >= 3) {
+              const discoveredAt = Date.now();
+              dispatch({
+                type: ACTIONS.COLLECT_WORD,
+                payload: { text, tier, discoveredAt },
+              });
+              // Page bonus: every 10 entries in anthology.collected
+              const newLength = (gameState.anthology.collected?.length ?? 0) + 1;
+              const newPages = Math.floor(newLength / 10);
+              if (newPages > anthologyPageRef.current) {
+                anthologyPageRef.current = newPages;
+                dispatch({ type: ACTIONS.ADD_MONEY, payload: 500 });
+                addEvent('info', `\u{1F4D6} Page ${newPages} complete! +$500`);
+              }
+              setPinnedAlert({ message: `\u{1F4D6} Rare find anthologised: "${text}"`, type: 'info' });
+              setTimeout(() => setPinnedAlert(null), 8000);
+              addEvent('info', `\u{1F4D6} Rare find collected into anthology: "${text}"`);
+            } else {
+              dispatch({
+                type: ACTIONS.HARVEST_WORD,
+                payload: { text, tier, count: 1 },
+              });
+              const phraseWordCount = text.trim().split(/\s+/).length;
+              if (phraseWordCount > 1) setComboCount(phraseWordCount);
+              addEvent(
+                'discovery',
+                `Discovered "${text}"`
+              );
+            }
           }
         }
       }
@@ -566,12 +606,29 @@ export function App() {
 
     playDing(tier);
 
-    dispatch({
-      type: ACTIONS.HARVEST_WORD,
-      payload: { text: word, tier: tier, count: 1 },
-    });
-
-    addEvent('discovery', `Discovered "${word}"`);
+    if (tier >= 3) {
+      dispatch({
+        type: ACTIONS.COLLECT_WORD,
+        payload: { text: word, tier, discoveredAt: now },
+      });
+      // Page bonus: optimistically compute from the live ref (updated each render)
+      const newLength = liveAnthologyLengthRef.current + 1;
+      const newPages = Math.floor(newLength / 10);
+      if (newPages > anthologyPageRef.current) {
+        anthologyPageRef.current = newPages;
+        dispatch({ type: ACTIONS.ADD_MONEY, payload: 500 });
+        addEvent('info', `\u{1F4D6} Page ${newPages} complete! +$500`);
+      }
+      setPinnedAlert({ message: `\u{1F4D6} Rare find anthologised: "${word}"`, type: 'info' });
+      setTimeout(() => setPinnedAlert(null), 8000);
+      addEvent('info', `\u{1F4D6} Rare find collected into anthology: "${word}"`);
+    } else {
+      dispatch({
+        type: ACTIONS.HARVEST_WORD,
+        payload: { text: word, tier: tier, count: 1 },
+      });
+      addEvent('discovery', `Discovered "${word}"`);
+    }
   }, []);
 
   const handleSellWords = () => {
@@ -707,6 +764,9 @@ export function App() {
 
         {/* Stats */}
         <Stats gameState={gameState} bananasVisible={breedingUnlocked} />
+
+        {/* Anthology */}
+        <Anthology collected={gameState.anthology.collected ?? []} />
 
         {/* Sell button + Economy buttons */}
         <div className="economy">

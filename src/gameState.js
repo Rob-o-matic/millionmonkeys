@@ -32,6 +32,7 @@ export const INITIAL_STATE = {
   },
   anthology: {
     words: [], // [{ text, tier, timestamp }]
+    collected: [], // [{ text, tier, discoveredAt }] — Tier 3/4 gems collected here
     totalWordsEver: 0, // For Shakespeare progress (cosmetic)
     pages: {}, // { pageKey: { required: [], collected: [] } }
   },
@@ -80,6 +81,7 @@ export const ACTIONS = {
   SET_DRIFT: 'SET_DRIFT',
   BUY_BANANAS: 'BUY_BANANAS',
   CONSUME_BANANAS: 'CONSUME_BANANAS',
+  COLLECT_WORD: 'COLLECT_WORD',
 };
 
 /* Reducer */
@@ -269,6 +271,22 @@ export function gameReducer(state = INITIAL_STATE, action) {
           bananas: Math.max(0, state.resources.bananas - action.payload),
         },
       };
+
+    case ACTIONS.COLLECT_WORD: {
+      const { text, tier, discoveredAt } = action.payload;
+      return {
+        ...state,
+        anthology: {
+          ...state.anthology,
+          collected: [
+            ...state.anthology.collected,
+            { text, tier, discoveredAt },
+          ],
+          totalWordsEver: state.anthology.totalWordsEver + 1,
+        },
+        // Do NOT touch resources.words — collected gems bypass the sell cycle
+      };
+    }
 
     case ACTIONS.RESET_GAME:
       return INITIAL_STATE;
