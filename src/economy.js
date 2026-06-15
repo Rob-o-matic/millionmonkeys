@@ -3,7 +3,7 @@
 const UPGRADE_CONFIGS = {
   monkeys: { baseCost: 30, costMult: 1.25, name: 'Monkey' },
   habitat: { baseCost: 500, costMult: 1.15, name: 'Upgrade Habitat' },
-  caffeine: { baseCost: 60, costMult: 2.0, name: 'Better Beans' },
+  caffeine: { baseCost: 60, costMult: 2.0, name: 'Coffee Maker' },
   salesMonkey: { baseCost: 2000, costMult: 1.15, name: 'Sales Monkey' },
   wordCounter: { baseCost: 350, costMult: 1.15, name: 'Word Counter' },
 };
