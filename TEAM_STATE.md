@@ -6,7 +6,7 @@
 > If a step fails with "session limit" / token exhaustion, mark it BLOCKED
 > with a timestamp and stop — the hourly loop will retry it.
 
-Last updated: 2026-06-14 (local) — P2-1 done (commit 982cf48)
+Last updated: 2026-06-14 (local) — P2-2 done (commit 9fa60df)
 
 ## Current branch / repo state
 - Repo: C:/Users/Owner/Documents/MillionMonkeys2 (github.com/Rob-o-matic/millionmonkeys)
@@ -169,23 +169,23 @@ Key codebase facts agents MUST know before editing:
     - Render <CaffeineDial> in App.jsx when caffeine >= 1.
     - 19+ tests passing, build clean, commit.
 
-10. **TODO — P2-2: Anthology Collection**
-    - Add ACTIONS.COLLECT_WORD to gameState.js. Reducer: adds entry to
-      anthology.collected (new field: []), increments totalWordsEver,
-      does NOT add to resources.words (collected, not sold).
-    - Add anthology.collected:[] to INITIAL_STATE.anthology.
-    - App.jsx handleWordDetected: tier<=2 → HARVEST_WORD (unchanged);
-      tier>=3 → COLLECT_WORD. Fire a pinned StatusBox alert on collection
-      ("📖 Rare find anthologized: '<text>'"). Clear pinned after 8s.
-    - Page bonus: every 10 entries in anthology.collected = a completed
-      page → dispatch ADD_MONEY($500) + StatusBox "📖 Page complete! +$500".
-      Track with a ref so bonus fires exactly once per page milestone.
-    - New Anthology.jsx: collapsible panel listing anthology.collected
-      entries (text + tier label). Show "N phrases collected · N pages".
-      Visible after first entry is collected.
-    - Anthology.css: uses existing token variables. Frozen visual style
-      (Build Rule 3: anthology tokens scoped, don't drift).
-    - 19+ tests passing, build clean, commit.
+10. **DONE 2026-06-14 — P2-2: Anthology Collection (commit 9fa60df)**
+    - Added ACTIONS.COLLECT_WORD to gameState.js. Reducer: appends
+      { text, tier, discoveredAt } to anthology.collected (new field),
+      increments totalWordsEver, does NOT touch resources.words.
+    - Added anthology.collected:[] to INITIAL_STATE.anthology.
+    - App.jsx: tier>=3 gems (scripted, post-scripted, and detection loop)
+      → COLLECT_WORD instead of HARVEST_WORD. Pinned alert
+      "📖 Rare find anthologised: '<text>'" clears after 8s.
+    - Page bonus: anthologyPageRef tracks completed pages; every 10
+      entries → ADD_MONEY($500) + StatusBox "📖 Page N complete! +$500".
+    - liveAnthologyLengthRef (updated every render) lets the stable
+      handleWordDetected callback compute page bonuses without stale closure.
+    - New Anthology.jsx: collapsible panel, header shows N collected / N pages,
+      list in reverse order with "phrase"/"anomaly" tier labels.
+      Tier 4 text uses --brass-ink. Returns null when empty.
+    - New Anthology.css: all CSS variables, frozen act-1 aesthetic.
+    - 19/19 tests passing, build clean.
 
 11. **TODO — P2-3: Espresso Shot**
     - Hot-streak event: a monkey "glows" at random intervals (60–180s,
