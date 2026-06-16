@@ -66,6 +66,7 @@ export function App() {
   const lastBreedReportRef = useRef(Date.now());
   const comboCountRef = useRef(0);
   const recentHarvestsRef = useRef(new Map());
+  const sellHintShownRef = useRef(false);
   const anthologyPageRef = useRef(0);
   const dictionaryRef = useRef([]);
   /* Fixed-timestep detection accumulator (issue C): income is computed here
@@ -612,8 +613,8 @@ export function App() {
 
       if (whole === 0 || dictionaryRef.current.length === 0) return;
 
-      /* Up to 3 detections go through the full path (5s dedup, tier from
-         dictionary index, ding, StatusBox event, HARVEST_WORD dispatch) */
+      /* Up to 3 detections go through the full path (5s dedup, ding,
+         StatusBox event, HARVEST_WORD dispatch — always tier 1) */
       const dict = dictionaryRef.current;
       const fullPath = Math.min(whole, 3);
       for (let i = 0; i < fullPath; i++) {
@@ -650,36 +651,17 @@ export function App() {
     if (lastHarvest && now - lastHarvest < 5000) return;
     recentHarvestsRef.current.set(word.toLowerCase(), now);
 
-    // Determine tier based on word commonness in dictionary
-    const wordIndex = dictionaryRef.current.indexOf(word);
-    let tier = 1;
-    if (wordIndex > 3000) tier = 3;
-    else if (wordIndex > 1000) tier = 2;
+    // Detection is always tier 1 — tier 2/3/4 comes exclusively from the scheduler
+    playDing(1);
 
-    playDing(tier);
-
-    if (tier >= 3) {
-      dispatch({
-        type: ACTIONS.COLLECT_WORD,
-        payload: { text: word, tier, discoveredAt: now },
-      });
-      // Page bonus: optimistically compute from the live ref (updated each render)
-      const newLength = liveAnthologyLengthRef.current + 1;
-      const newPages = Math.floor(newLength / 10);
-      if (newPages > anthologyPageRef.current) {
-        anthologyPageRef.current = newPages;
-        dispatch({ type: ACTIONS.ADD_MONEY, payload: 500 });
-        addEvent('info', `\u{1F4D6} Page ${newPages} complete! +$500`);
-      }
-      setPinnedAlert({ message: `\u{1F4D6} Rare find anthologised: "${word}"`, type: 'info' });
-      setTimeout(() => setPinnedAlert(null), 8000);
-      addEvent('info', `\u{1F4D6} Rare find collected into anthology: "${word}"`);
-    } else {
-      dispatch({
-        type: ACTIONS.HARVEST_WORD,
-        payload: { text: word, tier: tier, count: 1 },
-      });
-      addEvent('discovery', `Discovered "${word}"`);
+    dispatch({
+      type: ACTIONS.HARVEST_WORD,
+      payload: { text: word, tier: 1, count: 1 },
+    });
+    addEvent('discovery', `Discovered "${word}"`);
+    if (!sellHintShownRef.current) {
+      sellHintShownRef.current = true;
+      addEvent('info', 'Words sell for $2 each — press SELL below');
     }
   }, []);
 
