@@ -109,7 +109,7 @@ export function App() {
 
   // Add event with timestamp
   const addEvent = (type, message) => {
-    setEvents(prev => [...prev, {
+    setEvents(prev => [...prev.slice(-50), {
       type,
       message: `[${getTimestamp()}] ${message}`,
       timestamp: Date.now()
@@ -268,21 +268,7 @@ export function App() {
         });
       }
 
-      // Check for Phase 2 transition at 100 monkeys
-      if (gameState.phase === 1 && totalMonkeys >= 100) {
-        dispatch({ type: ACTIONS.SET_PHASE, payload: 2 });
-        addEvent('critical', '🚨 CRITICAL MASS ACHIEVED');
-        addEvent('info', 'Monkey output now 0.001% of global text production');
-        addEvent('info', 'New objective: Dominate the textual sphere');
-
-        setCurrentAlert({
-          type: 'critical',
-          icon: '⚠️',
-          title: 'Critical Mass Achieved',
-          message: 'The monkey population has reached 100. Their collective output is now measurable on a global scale.',
-          details: 'New resource unlocked: INFLUENCE • New objective: Control the publishing industry'
-        });
-      }
+      // Phase 2 transition deferred — Act 2 content not yet built
 
       // Only run if we have monkeys
       if (totalMonkeys === 0) return;
@@ -330,11 +316,11 @@ export function App() {
             if (newPages > anthologyPageRef.current) {
               anthologyPageRef.current = newPages;
               dispatch({ type: ACTIONS.ADD_MONEY, payload: 500 });
-              addEvent('info', `\u{1F4D6} Page ${newPages} complete! +$500`);
+              addEvent('info', `\u{1F4D6} I.I.L. journal submission accepted! +$500`);
             }
-            setPinnedAlert({ message: `\u{1F4D6} Rare find anthologised: "${scriptedGem.text}"`, type: 'info' });
+            setPinnedAlert({ message: `\u{1F4D6} I.I.L. has flagged this phrase: "${scriptedGem.text}"`, type: 'info' });
             setTimeout(() => setPinnedAlert(null), 8000);
-            addEvent('info', `\u{1F4D6} Rare find collected into anthology: "${scriptedGem.text}"`);
+            addEvent('info', `\u{1F4D6} The Institute has flagged: "${scriptedGem.text}"`);
           } else {
             dispatch({
               type: ACTIONS.HARVEST_WORD,
@@ -393,11 +379,11 @@ export function App() {
               if (newPages > anthologyPageRef.current) {
                 anthologyPageRef.current = newPages;
                 dispatch({ type: ACTIONS.ADD_MONEY, payload: 500 });
-                addEvent('info', `\u{1F4D6} Page ${newPages} complete! +$500`);
+                addEvent('info', `\u{1F4D6} I.I.L. journal submission accepted! +$500`);
               }
-              setPinnedAlert({ message: `\u{1F4D6} Rare find anthologised: "${text}"`, type: 'info' });
+              setPinnedAlert({ message: `\u{1F4D6} I.I.L. has flagged this phrase: "${text}"`, type: 'info' });
               setTimeout(() => setPinnedAlert(null), 8000);
-              addEvent('info', `\u{1F4D6} Rare find collected into anthology: "${text}"`);
+              addEvent('info', `\u{1F4D6} The Institute has flagged: "${text}"`);
             } else {
               dispatch({
                 type: ACTIONS.HARVEST_WORD,
@@ -729,9 +715,9 @@ export function App() {
     setCurrentAlert({
       type: 'critical',
       icon: '\u{1F4D6}',
-      title: `Volume ${nextCount} Published!`,
-      message: `Your anthology has been published. The academic world takes notice.`,
-      details: `Collected words submitted to print. +$500 advance from your publisher.`,
+      title: `Volume ${nextCount} Submitted to I.I.L.!`,
+      message: `The Institute for Improbable Literature has accepted your volume for publication.`,
+      details: `Flagged phrases cleared from archive. +$500 publisher's advance deposited.`,
       onDismiss: () => {
         dispatch({ type: ACTIONS.PRESTIGE });
         setCurrentAlert(null);
@@ -757,6 +743,15 @@ export function App() {
         caffeineDialPendingStop: newStop,
       },
     });
+    const dialLabels = ['Decaf', 'Mild', 'Regular', 'Strong', 'The Jitters'];
+    const dialHints = [
+      'mostly common words, very few rare finds',
+      'slightly elevated rare find rate',
+      'balanced discovery rate',
+      'higher chance of rare phrases',
+      'chaotic — rare finds surge, common words drop',
+    ];
+    addEvent('info', `Coffee Maker set to ${dialLabels[newStop]} — ${dialHints[newStop]}. Metabolising for 60s.`);
   };
 
   const upgradesToShow = Object.keys(UPGRADE_CONFIGS).filter(key => {
@@ -811,107 +806,108 @@ export function App() {
             <h1>{gameState.phase === 2 ? 'MILLION MONKEYS DOMINION PROJECT' : 'MILLION MONKEYS RESEARCH PROJECT'}</h1>
           </div>
           <div className="game-layout">
-        {/* Feed or Sector Chart based on phase */}
-        {gameState.phase === 1 ? (
-          <Feed
-            gameState={gameState}
-            startTime={startTimeRef.current}
-            totalMonkeys={gameState.upgrades.monkeys}
-            injectedGem={injectedGem}
-            dozing={dozing}
-          />
-        ) : (
-          <SectorChart
-            textShare={gameState.ui.earthTextShare}
-            sectorsControlled={gameState.ui.sectorsControlled}
-            totalMonkeys={gameState.upgrades.monkeys}
-          />
-        )}
+            {/* Left column: feed + status */}
+            <div className="feed-column">
+              {gameState.phase === 1 ? (
+                <Feed
+                  gameState={gameState}
+                  startTime={startTimeRef.current}
+                  totalMonkeys={gameState.upgrades.monkeys}
+                  injectedGem={injectedGem}
+                  dozing={dozing}
+                />
+              ) : (
+                <SectorChart
+                  textShare={gameState.ui.earthTextShare}
+                  sectorsControlled={gameState.ui.sectorsControlled}
+                  totalMonkeys={gameState.upgrades.monkeys}
+                />
+              )}
+              <StatusBox events={events} pinnedAlert={pinnedAlert} />
+            </div>
 
-        {/* Status Box */}
-        <StatusBox events={events} pinnedAlert={pinnedAlert} />
+            {/* Right column: stats + two-column controls */}
+            <div className="control-column">
+              <Stats gameState={gameState} bananasVisible={breedingUnlocked} />
 
-        {/* Stats */}
-        <Stats gameState={gameState} bananasVisible={breedingUnlocked} />
+              <div className="upgrade-grid">
+                {/* Left: sell, banana, upgrades */}
+                <div className="upgrade-col">
+                  <button
+                    className={`sell-button ${gameState.resources.words > 0 ? 'active' : ''} ${gameState.upgrades.salesMonkey > 0 ? 'automated' : ''} ${gameState.resources.words >= 5 && gameState.upgrades.salesMonkey === 0 ? 'nudge' : ''}`}
+                    onClick={handleSellWords}
+                    disabled={gameState.resources.words === 0}
+                  >
+                    <span className="sell-label">{gameState.upgrades.salesMonkey > 0 ? 'AUTO-SELL' : 'SELL'}</span>
+                    <span className="sell-count">{gameState.resources.words} words</span>
+                    <span className="sell-earnings">+${gameState.resources.words * DOLLARS_PER_WORD}</span>
+                  </button>
 
-        {/* Anthology */}
-        <Anthology collected={gameState.anthology.collected ?? []} />
+                  {breedingUnlocked && (() => {
+                    const effectivePrice = bananaBoat ? bananaPrice * 0.5 : bananaPrice;
+                    const totalCost = Math.round(effectivePrice * BANANA_BUY_COUNT * 100) / 100;
+                    const canAffordBananas = gameState.resources.money >= totalCost;
+                    return (
+                      <button
+                        className={`banana-button${bananaBoat ? ' boat-active' : ''}`}
+                        onClick={handleBuyBananas}
+                        disabled={!canAffordBananas}
+                        title={`Buy ${BANANA_BUY_COUNT} bananas — $${totalCost.toFixed(2)}`}
+                      >
+                        {bananaBoat && <span className="banana-boat-tag">🚢 50% OFF</span>}
+                        <span className="banana-label">Buy {BANANA_BUY_COUNT} 🍌</span>
+                        <span className="banana-price">${totalCost.toFixed(2)}</span>
+                      </button>
+                    );
+                  })()}
 
-        {/* Prestige — unlocks when 5+ entries collected */}
-        {(gameState.anthology.collected?.length ?? 0) >= 5 && (
-          <PrestigeButton
-            collectedCount={gameState.anthology.collected.length}
-            onPrestige={handlePrestige}
-          />
-        )}
+                  {upgradesToShow.map((upgradeKey) => {
+                    const currentCount = upgradeKey === 'monkeys' ? (gameState.costBasis.monkeys || 0) : (gameState.upgrades[upgradeKey] || 0);
+                    const cost = getNextCost(upgradeKey, currentCount);
+                    return (
+                      <UpgradeButton
+                        key={upgradeKey}
+                        upgradeKey={upgradeKey}
+                        upgradeName={UPGRADE_CONFIGS[upgradeKey].name}
+                        cost={cost}
+                        canAfford={gameState.resources.money >= cost}
+                        money={gameState.resources.money}
+                        pulse={upgradeKey === 'monkeys' && gameState.upgrades.monkeys === 0}
+                        onClick={() => handleUpgradeBuy(upgradeKey)}
+                        showCount={true}
+                        upgradeCount={currentCount}
+                      />
+                    );
+                  })}
+                </div>
 
-        {/* Sell button + Economy buttons */}
-        <div className="economy">
-          <button
-            className={`sell-button ${gameState.resources.words > 0 ? 'active' : ''} ${gameState.upgrades.salesMonkey > 0 ? 'automated' : ''} ${gameState.resources.words >= 5 && gameState.upgrades.salesMonkey === 0 ? 'nudge' : ''}`}
-            onClick={handleSellWords}
-            disabled={gameState.resources.words === 0}
-          >
-            <span className="sell-label">{gameState.upgrades.salesMonkey > 0 ? 'AUTO-SELL' : 'SELL'}</span>
-            <span className="sell-count">{gameState.resources.words} words</span>
-            <span className="sell-earnings">+${gameState.resources.words * DOLLARS_PER_WORD}</span>
-          </button>
-
-          {breedingUnlocked && (() => {
-            const effectivePrice = bananaBoat ? bananaPrice * 0.5 : bananaPrice;
-            const totalCost = Math.round(effectivePrice * BANANA_BUY_COUNT * 100) / 100;
-            const canAffordBananas = gameState.resources.money >= totalCost;
-            return (
-              <button
-                className={`banana-button${bananaBoat ? ' boat-active' : ''}`}
-                onClick={handleBuyBananas}
-                disabled={!canAffordBananas}
-                title={`Buy ${BANANA_BUY_COUNT} bananas — $${totalCost.toFixed(2)}`}
-              >
-                {bananaBoat && <span className="banana-boat-tag">🚢 50% OFF</span>}
-                <span className="banana-label">Buy {BANANA_BUY_COUNT} 🍌</span>
-                <span className="banana-price">${totalCost.toFixed(2)}</span>
-              </button>
-            );
-          })()}
-
-          {upgradesToShow.map((upgradeKey) => {
-            const currentCount = upgradeKey === 'monkeys' ? (gameState.costBasis.monkeys || 0) : (gameState.upgrades[upgradeKey] || 0);
-            const cost = getNextCost(upgradeKey, currentCount);
-
-            return (
-              <UpgradeButton
-                key={upgradeKey}
-                upgradeKey={upgradeKey}
-                upgradeName={UPGRADE_CONFIGS[upgradeKey].name}
-                cost={cost}
-                canAfford={gameState.resources.money >= cost}
-                money={gameState.resources.money}
-                pulse={upgradeKey === 'monkeys' && gameState.upgrades.monkeys === 0}
-                onClick={() => handleUpgradeBuy(upgradeKey)}
-                showCount={true}
-                upgradeCount={currentCount}
-              />
-            );
-          })}
-
-          {gameState.upgrades.caffeine >= 1 && (
-            <CaffeineDial
-              stop={dialStop}
-              metabolizing={dialMetabolizing}
-              metabolizeEnd={dialMetabolizeEnd}
-              dozing={dozing}
-              onSelect={handleDialChange}
-            />
-          )}
-
-          <EspressoButton
-            available={espressoAvailable}
-            active={espressoActive}
-            endTime={espressoEndRef.current}
-            onPress={handleEspresso}
-          />
-        </div>
+                {/* Right: dial, espresso, archive, prestige */}
+                <div className="special-col">
+                  {gameState.upgrades.caffeine >= 1 && (
+                    <CaffeineDial
+                      stop={dialStop}
+                      metabolizing={dialMetabolizing}
+                      metabolizeEnd={dialMetabolizeEnd}
+                      dozing={dozing}
+                      onSelect={handleDialChange}
+                    />
+                  )}
+                  <EspressoButton
+                    available={espressoAvailable}
+                    active={espressoActive}
+                    endTime={espressoEndRef.current}
+                    onPress={handleEspresso}
+                  />
+                  <Anthology collected={gameState.anthology.collected ?? []} />
+                  {(gameState.anthology.collected?.length ?? 0) >= 5 && (
+                    <PrestigeButton
+                      collectedCount={gameState.anthology.collected.length}
+                      onPrestige={handlePrestige}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}

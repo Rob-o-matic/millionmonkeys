@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import './Anthology.css';
 
 export function Anthology({ collected }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   if (!collected || collected.length === 0) return null;
 
-  const pages = Math.floor(collected.length / 10);
+  const volumes = Math.floor(collected.length / 10);
   const reversed = [...collected].reverse();
 
   return (
@@ -18,9 +18,9 @@ export function Anthology({ collected }) {
         aria-controls="anthology-list"
       >
         <span>
-          {'\u{1F4D6}'} The Anthology
-          {' • '}{collected.length} collected
-          {' • '}{pages} {pages === 1 ? 'page' : 'pages'}
+          {'\u{1F4D6}'} I.I.L. Research Archive
+          {' • '}{collected.length} flagged
+          {volumes > 0 && ` • ${volumes} ${volumes === 1 ? 'volume' : 'volumes'} submitted`}
         </span>
         <span className="anthology-header-toggle" aria-hidden="true">
           {open ? '[▲]' : '[▼]'}

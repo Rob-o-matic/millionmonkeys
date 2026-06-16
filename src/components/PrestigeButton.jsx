@@ -31,12 +31,12 @@ export function PrestigeButton({ collectedCount, onPrestige }) {
         onClick={handleClick}
       >
         {armed
-          ? 'Confirm — Publish Volume? (click again)'
-          : `\u{1F4D6} Publish a Volume (${collectedCount} phrases collected)`}
+          ? 'Confirm — Submit to Institute? (click again)'
+          : `\u{1F4D6} Submit Volume to I.I.L. (${collectedCount} phrases)`}
       </button>
       {armed && (
         <div className="prestige-warning">
-          This will reset the game. Anthology and tenure monkeys are kept.
+          Flagged phrases are submitted for publication. You keep playing. +$500 publisher's advance.
         </div>
       )}
     </div>

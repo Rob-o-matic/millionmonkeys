@@ -30,15 +30,25 @@
 }
 
 .game-layout {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 280px;
   gap: var(--space-md);
   padding: var(--space-lg);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-/* Feed: dominant, top */
+/* Left column: feed + status box */
+.feed-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Feed: fills remaining height in feed-column */
 .feed {
   flex: 1;
   border: 1px solid var(--text);
@@ -49,19 +59,55 @@
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--bg);
+  min-height: 0;
 }
 
-/* Economy + Sell button */
-.economy {
+/* Right column: stats + two-column controls */
+.control-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Two-column controls grid */
+.upgrade-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--tap-target), 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-sm);
-  min-height: var(--tap-target);
+  align-items: start;
 }
 
-.economy button {
+.upgrade-col,
+.special-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.upgrade-col button,
+.special-col button {
   min-height: var(--tap-target);
   padding: var(--space-md);
+  width: 100%;
+}
+
+/* Mobile: single column stack */
+@media (max-width: 640px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .feed-column {
+    height: 220px;
+    flex-shrink: 0;
+  }
+
+  .upgrade-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .sell-button {
