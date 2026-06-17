@@ -32,8 +32,8 @@ describe('Economy', () => {
   it('should calculate habitat and sales monkey costs with 1.15x multiplier', () => {
     expect(getCost('habitat', 0)).toBe(500);
     expect(getCost('habitat', 1)).toBe(575);
-    expect(getCost('salesMonkey', 0)).toBe(2000);
-    expect(getCost('salesMonkey', 1)).toBe(2300);
+    expect(getCost('salesMonkey', 0)).toBe(750);
+    expect(getCost('salesMonkey', 1)).toBe(862);
   });
 
   it('should return Infinity for unknown upgrade tracks', () => {

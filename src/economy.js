@@ -4,15 +4,15 @@ const UPGRADE_CONFIGS = {
   monkeys: { baseCost: 30, costMult: 1.25, name: 'Monkey' },
   habitat: { baseCost: 500, costMult: 1.15, name: 'Upgrade Habitat' },
   caffeine: { baseCost: 60, costMult: 2.0, name: 'Coffee Maker' },
-  salesMonkey: { baseCost: 2000, costMult: 1.15, name: 'Sales Monkey' },
+  salesMonkey: { baseCost: 750, costMult: 1.15, name: 'Sales Monkey' },
   wordCounter: { baseCost: 350, costMult: 1.15, name: 'Word Counter' },
 };
 
 const DOLLARS_PER_WORD = 2; // $2 per word when sold
 
-export const BANANA_PRICE_BASE = 0.10;
-export const BANANA_PRICE_MIN  = 0.05;
-export const BANANA_PRICE_MAX  = 0.18;
+export const BANANA_PRICE_BASE = 0.25;
+export const BANANA_PRICE_MIN  = 0.12;
+export const BANANA_PRICE_MAX  = 0.45;
 export const BANANA_BUY_COUNT  = 20;
 
 /* Calculate cost for the Nth purchase in a track (0-indexed) */
@@ -90,11 +90,12 @@ export function getProductionMultiplier(upgrades) {
   return mult;
 }
 
-/* Banana consumption rate (bananas/second). Sublinear to keep cost/income
-   curves from crossing as population scales. */
+/* Banana consumption rate (bananas/second). Steeper curve ensures upkeep
+   stays meaningful as population grows. At 1 monkey: 0.1/s (30 bananas = 5min).
+   At 4 monkeys: 0.35/s (20 bananas = ~57s). At 10 monkeys: 0.79/s. */
 export function getBananaConsumptionRate(totalMonkeys) {
   if (totalMonkeys <= 0) return 0;
-  return Math.pow(totalMonkeys, 0.8) / 15;
+  return Math.pow(totalMonkeys, 0.9) / 10;
 }
 
 /* Seconds of banana supply remaining */

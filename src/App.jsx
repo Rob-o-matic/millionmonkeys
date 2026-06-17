@@ -35,6 +35,7 @@ export function App() {
   const [events, setEvents] = useState([]);
   const [comboCount, setComboCount] = useState(0);
   const [breedingUnlocked, setBreedingUnlocked] = useState(false);
+  const [bananasUnlocked, setBananasUnlocked] = useState(false);
   const [currentAlert, setCurrentAlert] = useState(null);
   const [lastMarketingMilestone, setLastMarketingMilestone] = useState(0);
   const [injectedGem, setInjectedGem] = useState(null);
@@ -175,7 +176,7 @@ export function App() {
 
   /* Banana price walk: mean-reverting random walk every 5s. Rare banana boat event. */
   useEffect(() => {
-    if (!gameStarted || !breedingUnlocked) return;
+    if (!gameStarted || !bananasUnlocked) return;
 
     const tick = setInterval(() => {
       setBananaPrice(prev => {
@@ -207,7 +208,7 @@ export function App() {
       clearInterval(tick);
       if (bananaBoatEndRef.current) clearTimeout(bananaBoatEndRef.current);
     };
-  }, [gameStarted, breedingUnlocked]);
+  }, [gameStarted, bananasUnlocked]);
 
   /* Typing ambience - scales with monkey count, silenced when dozing */
   useEffect(() => {
@@ -246,21 +247,26 @@ export function App() {
         });
       }
 
-      // Check for breeding unlock at 4 monkeys
+      // Banana unlock: fires when first monkey is purchased
+      if (!bananasUnlocked && totalMonkeys >= 1) {
+        setBananasUnlocked(true);
+        dispatch({ type: ACTIONS.BUY_BANANAS, payload: { count: 30, cost: 0 } });
+        addEvent('info', '🍌 Monkeys need bananas to type — 30 provided to start!');
+      }
+
+      // Breeding unlock at 4 monkeys
       if (!breedingUnlocked && totalMonkeys >= 4) {
         setBreedingUnlocked(true);
-        // Gift 100 starter bananas so the player has time to learn the system
-        dispatch({ type: ACTIONS.BUY_BANANAS, payload: { count: 100, cost: 0 } });
-        addEvent('info', '⚠️ ALERT: Monkeys have started breeding — and they\'re hungry!');
-        addEvent('info', 'Starter supply: 100 🍌 provided. Buy more to keep them typing.');
-        setPinnedAlert({ message: '⚠️ BREEDING ALERT: monkeys are hungry — buy bananas', type: 'info' });
+        addEvent('info', '⚠️ BREEDING ALERT: troop has reached critical mass and begun to reproduce!');
+        addEvent('info', 'Population grows automatically. Habitat upgrades accelerate breeding.');
+        setPinnedAlert({ message: '⚠️ Monkeys are breeding — population growing', type: 'info' });
 
         setCurrentAlert({
           type: 'warning',
           icon: '🐵',
           title: 'Breeding Alert',
-          message: 'The monkeys have reached critical mass and begun to reproduce.',
-          details: 'Population will now grow automatically. They also need bananas to keep typing — buy more before they doze off.',
+          message: 'The troop has reached critical mass and begun to reproduce.',
+          details: 'Population will now grow automatically. Habitat upgrades accelerate breeding.',
           onDismiss: () => {
             setCurrentAlert(null);
             setPinnedAlert(null);
@@ -447,8 +453,8 @@ export function App() {
         setEspressoAvailable(false);
       }
 
-      /* Banana consumption (active once breeding unlocks) */
-      if (breedingUnlocked && totalMonkeys > 0) {
+      /* Banana consumption (active once first monkey purchased) */
+      if (bananasUnlocked && totalMonkeys > 0) {
         bananaConsumeAccRef.current += getBananaConsumptionRate(totalMonkeys) * 0.1;
         const whole = Math.floor(bananaConsumeAccRef.current);
         if (whole > 0) {
@@ -472,9 +478,9 @@ export function App() {
         if (!isDozingNow && gameState.resources.bananas > 0) {
           const bananaSeconds = getBananaTimeRemaining(gameState.resources.bananas, totalMonkeys);
           const now = Date.now();
-          if (bananaSeconds < 40 && now - lastBananaWarnRef.current > 120000) {
+          if (bananaSeconds < 60 && now - lastBananaWarnRef.current > 120000) {
             lastBananaWarnRef.current = now;
-            addEvent('info', '🍌 Bananas running low — troop gets restless in ~40s');
+            addEvent('info', '🍌 Bananas running low — buy more before the troop dozes off');
           }
         }
       }
@@ -828,7 +834,7 @@ export function App() {
 
             {/* Right column: stats + two-column controls */}
             <div className="control-column">
-              <Stats gameState={gameState} bananasVisible={breedingUnlocked} />
+              <Stats gameState={gameState} bananasVisible={bananasUnlocked} />
 
               <div className="upgrade-grid">
                 {/* Left: sell, banana, upgrades */}
@@ -843,7 +849,7 @@ export function App() {
                     <span className="sell-earnings">+${gameState.resources.words * DOLLARS_PER_WORD}</span>
                   </button>
 
-                  {breedingUnlocked && (() => {
+                  {bananasUnlocked && (() => {
                     const effectivePrice = bananaBoat ? bananaPrice * 0.5 : bananaPrice;
                     const totalCost = Math.round(effectivePrice * BANANA_BUY_COUNT * 100) / 100;
                     const canAffordBananas = gameState.resources.money >= totalCost;
